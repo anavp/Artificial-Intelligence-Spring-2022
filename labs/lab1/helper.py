@@ -15,10 +15,7 @@ class ParserMeta(type):
                 subclass.actions.__annotations__["return"] == list and
                 hasattr(subclass, 'computeError') and
                 callable(subclass.computeError) and
-                subclass.computeError.__annotations__["return"] == int and
-                hasattr(subclass, 'goal') and
-                callable(subclass.goal) and
-                subclass.goal.__annotations__["return"] == bool)
+                subclass.computeError.__annotations__["return"] == int)# and
 
 
 class stateInterface(metaclass = ParserMeta):
@@ -26,29 +23,34 @@ class stateInterface(metaclass = ParserMeta):
         pass
     def computeError(state) -> int:
         pass
-    def goal(state) -> bool:
-        pass
+    def goal(self, state) -> bool:
+        return self.computeError(state) == 0
+
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
 
 
 class nQueensState(stateInterface):
-    numberOfQueens = -1
+    nQueens = -1
     state = None
     def __init__(self, n):
-        self.numberOfQueens = n
+        self.nQueens = n
+        self.state = [i for i in range(self.nQueens)]
     
     def actions(state) -> list:
         return ["this", "fine?"]
     
     def computeError(state) -> int:
         return 0
-
-    def goal(self, state) -> bool:
-        if self.computeError(state) == 0:
-            return True
-        return False
     
-    def printNumOfQueens(self):
+    def printThings(self):
         print("numberOfQueens: " + str(self.numberOfQueens))
+        print("state: " + str(self.state))
 
 
 class knapsackState(stateInterface):
@@ -67,6 +69,7 @@ class knapsackState(stateInterface):
 
     def actions(self, state) -> list:
         diff = list(set(self.allObjects) - set(state))
+        diff.sort()
         neighbors = []
         
         # Add an object
@@ -80,7 +83,8 @@ class knapsackState(stateInterface):
         # Swap an object
         for object in diff:
             for element in state:
-                neighbors.append(list(set(state) - set(element) + set(object)))
+                neighbors.append(list(set.union(set(state) - set(element), set(object))))
+        
         return neighbors
     
     def computeError(self, state) -> int:
@@ -90,15 +94,17 @@ class knapsackState(stateInterface):
             totalValue += self.objects[object]['V']
         return max(totalWeight - self.M, 0) + max(self.T - totalValue, 0)
 
-    def goal(self, state) -> bool:
-        if self.computeError(state) == 0:
-            return True
-        return False
-
-    def printAllObjects(self):
+    def printThings(self):
         print(self.state)
         for item, value in self.objects.items():
             print(item + ": " + str(value))
+
+
+def getObject(args):
+    if args.N == -1:
+        return knapsackState(args.knapsackFile)
+    else:
+        return nQueensState(args.N)
 
 
 def print_args(args):
@@ -141,3 +147,30 @@ def parse_args(args = None):
     parser.add_argument("-restarts", type = int, required = False, default = 0, \
         help = "the number of random restarts allowed; default = 0")
     return parser.parse_args()
+
+
+def writeState(state, error):
+    listLength = len(state)
+    write("[", end = "")
+    for index, object in enumerate(state):
+        if index < listLength - 1:
+            write(object, end = " ")
+        else:
+            write(object + "] = " + str(error))
+
+
+def printState(state, error):
+    listLength = len(state)
+    print("[", end = "")
+    for index, object in enumerate(state):
+        if index < listLength - 1:
+            print(object, end = " ")
+        else:
+            print(object + "] = " + str(error))
+
+
+@static_vars(outFile=None)
+def write(string, end = "\n", fileName = "./output.out"):
+    if write.outFile == None:
+        write.outFile = open(fileName, 'w')
+    write.outFile.write(string + end)

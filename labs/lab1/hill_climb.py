@@ -4,26 +4,39 @@ from helper import *
 DEBUG_MODE = False
 
 
-def getNeighbors(state):
-    return None
-
-
-def basicHillClimbing(initial, goal, actions, h):
-    print(actions(initial))
-    return
+def basicHillClimbing(initial, goal, actions, h, verbose):
+    initial.sort()
+    write("Start: ", end = "")
+    writeState(initial, h(initial))
     state = initial
     while not goal(state):
-      neighbors = []
-    #   for s in actions(state):
-    #     heapq.heappush(neighbors, (h(s), s))
-    #   if neighbors[0][0] <= h(state):
-    #     raise Error("unable to improve from %s" % s)
-      state = neighbors[0][1]
+        neighbors = actions(state)
+        minError = h(state)
+        minErrorIndex = -1
+        for index, s in enumerate(neighbors):
+            currentError = h(s)
+            if verbose:
+                s.sort()
+                writeState(s, currentError)
+            if currentError < minError:
+                minError = currentError
+                minErrorIndex = index
+        if minErrorIndex == -1:
+            write("Unable to improve from ", end = "")
+            writeState(state, h(state))
+            return state
+        else:
+            state = neighbors[minErrorIndex]
+            state.sort()
+            write("choose: ", end = "")
+            writeState(state, minError)
     return state
 
 
 def processHillClimbing(obj, verbose, sideways, restarts):
-    basicHillClimbing(obj.state, obj.goal, obj.actions, obj.computeError)
+    goal = basicHillClimbing(obj.state, obj.goal, obj.actions, obj.computeError, verbose)
+    write("Goal: ", end = "")
+    writeState(goal, obj.computeError(goal))
 
 
 if __name__ == '__main__':
@@ -35,13 +48,8 @@ if __name__ == '__main__':
     if (DEBUG_MODE):
         print_args(args)
 
-    if args.N == -1:
-        obj = knapsackState(args.knapsackFile)
-        if DEBUG_MODE:
-            obj.printAllObjects()
-    else:
-        obj = nQueensState(args.N)
-        if DEBUG_MODE:
-            obj.printNumOfQueens()
+    obj = getObject(args)
 
+    if DEBUG_MODE:
+        obj.printThings()
     processHillClimbing(obj, args.verbose, args.sideways, args.restarts)
