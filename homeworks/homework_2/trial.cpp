@@ -27,35 +27,48 @@ template <typename t1, typename t2> void print(const vector<pair<t1,t2> > &arr);
 template <typename t1, typename t2> void print(const vector<vector<pair<t1,t2> > > &arr);
 template <typename t1, typename t2> void print(const pair<t1, t2> &p);
 template <typename t1, typename t2, typename t3> void print(const pair<t1, pair<t2, t3> > &p);
+#define INPUT_FILE 1
 // Object	A	B	C	D	E
 // Value	13	8	11	7	5
 // Weight	11	4	7	4	2
 
-const char a = 'a', b = 'b', c = 'c', d = 'd', e = 'e', f = 'f';
-const int t = 23, m = 13;
+const char a = 'a', b = 'b', c = 'c', d = 'd', e = 'e', f = 'f', v = 'v';
+const int t[2] = {20, 21}, m[2] = {10, 11};
 
+/**
+ * @brief 
+ * Running Instructions:
+ * 	./trial [v: verbose, any other letter: not verbose] all letters in set
+ */
 int main(int argc, char *argv[]){
 	fastIO;
-	map<char, pair<int, int> > items;
-    items.insert(pair<char, pair<int, int> > (a, pair<int,int>(13, 11)));
-    items.insert(pair<char, pair<int, int> > (b, pair<int,int>(8, 4)));
-    items.insert(pair<char, pair<int, int> > (c, pair<int,int>(11, 7)));
-    items.insert(pair<char, pair<int, int> > (d, pair<int,int>(7, 4)));
-    items.insert(pair<char, pair<int, int> > (e, pair<int,int>(5, 2)));
+	map<char, pair<int, int> > items[2];
+    items[0].insert(pair<char, pair<int, int> > (a, pair<int,int>(10, 8)));
+    items[0].insert(pair<char, pair<int, int> > (b, pair<int,int>(8, 4)));
+    items[0].insert(pair<char, pair<int, int> > (c, pair<int,int>(7, 3)));
+    items[0].insert(pair<char, pair<int, int> > (d, pair<int,int>(6, 3)));
+    items[0].insert(pair<char, pair<int, int> > (e, pair<int,int>(4, 1)));
+	// map<char, pair<int, int> > items_side;
+	items[1].insert(pair<char, pair<int, int> > (a, pair<int,int>(10, 8)));
+    items[1].insert(pair<char, pair<int, int> > (b, pair<int,int>(8, 4)));
+    items[1].insert(pair<char, pair<int, int> > (c, pair<int,int>(7, 3)));
+    items[1].insert(pair<char, pair<int, int> > (d, pair<int,int>(6, 3)));
+    items[1].insert(pair<char, pair<int, int> > (e, pair<int,int>(4, 1)));
+	items[1].insert(pair<char, pair<int, int> > (f, pair<int,int>(6, 2)));
     int v = 0, w = 0;
     for (int i = 2; i < argc; ++i){
-        if (items.find(argv[i][0]) == items.end()){
+        if (items[INPUT_FILE].find(argv[i][0]) == items[INPUT_FILE].end()){
             cout << "shouldn't have happened\n";
             continue;
         }
-        v += items[argv[i][0]].first;
-        w += items[argv[i][0]].second;
+        v += items[INPUT_FILE][argv[i][0]].first;
+        w += items[INPUT_FILE][argv[i][0]].second;
     }
-    if (argv[1][0] == 'f'){
+    if (argv[1][0] == 'v'){
         cout << "Value: " << v << endl;
         cout << "Weight: " << w << endl;
     }
-    cout << "Error: " << max(w-m, 0) + max(t - v, 0) << endl;
+    cout << "Error: " << max(w-m[INPUT_FILE], 0) + max(t[INPUT_FILE] - v, 0) << endl;
 	return 0;
 }
 

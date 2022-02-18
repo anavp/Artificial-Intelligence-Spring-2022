@@ -1,31 +1,8 @@
-import argparse
+from curses.ascii import isdigit
 import json
 import copy
-
-class ParserMeta(type):
-    """A Parser metaclass that will be used for parser class creation.
-    """
-    def __instancecheck__(cls, instance):
-        return cls.__subclasscheck__(type(instance))
-
-    def __subclasscheck__(cls, subclass):
-        # TODO: Check if the functions names are correct
-        return (hasattr(subclass, 'Next') and
-                callable(subclass.Next) and
-                subclass.Next.__annotations__["return"] == list and
-                hasattr(subclass, 'Value') and
-                callable(subclass.Value) and
-                subclass.Value.__annotations__["return"] == int)# and
-
-
-class stateInterface(metaclass = ParserMeta):
-    def Next(state) -> list:
-        pass
-    def Value(state) -> int:
-        pass
-    def goal(self, state) -> bool:
-        return self.Value(state) == 0
-
+import random
+import argparse
 
 def static_vars(**kwargs):
     def decorate(func):
@@ -35,14 +12,83 @@ def static_vars(**kwargs):
     return decorate
 
 
+class ParserMeta(type):
+    """A Parser metaclass that will be used for parser class creation.
+    """
+    def __instancecheck__(cls, instance):
+        return cls.__subclasscheck__(type(instance))
+
+    def __subclasscheck__(cls, subclass):
+        # TODO: Check if the functions names are correct
+        return (hasattr(subclass, 'next') and
+                callable(subclass.next) and
+                subclass.next.__annotations__["return"] == list and
+                hasattr(subclass, 'value') and
+                callable(subclass.value) and
+                subclass.value.__annotations__["return"] == int and
+                hasattr(subclass, 'restart') and
+                callable(subclass.restart) and
+                subclass.restart.__annotations__["return"] == list and
+                hasattr(subclass, 'tiebreaker') and
+                callable(subclass.tiebreaker) and
+                subclass.tiebreaker.__annotations__["return"] == list
+        )
+
+
+class stateInterface(metaclass = ParserMeta):
+    __writeToFile = None
+    def next(state) -> list:
+        pass
+    def value(state) -> int:
+        pass
+    def goal(self, state) -> bool:
+        return self.value(state) == 0
+    def restart(self) -> list:
+        pass
+
+    def __init__(self, writeToFile):
+        self.__writeToFile = writeToFile
+
+    @staticmethod
+    @static_vars(outFile=None)
+    def __write(string,  writeToFile, end = "\n"):
+        if writeToFile and stateInterface.__write.outFile == None:
+            stateInterface.__write.outFile = open("./output.out", 'w')
+        if writeToFile:
+            stateInterface.__write.outFile.write(string + end)
+        else:
+            print(string)
+    
+    def printState(self, state = None, prefix = ""):
+        strForPrint = prefix
+        if state is None:
+            self.__write(strForPrint, self.__writeToFile)
+            return
+        listLength = len(state)
+        strForPrint += "["
+        # for index, object in enumerate(state):
+        for index, object in enumerate(state):
+            # strForPrint += str(object) + " "
+            if index < listLength - 1:
+                strForPrint += str(object) + " "
+            else:
+                strForPrint += str(object)
+        strForPrint += "] = " + str(self.value(state))
+        self.__write(strForPrint, self.__writeToFile)
+
+    def tiebreaker(possibilities) -> list:
+        pass
+
+
 class nQueensState(stateInterface):
     nQueens = -1
     state = None
-    def __init__(self, n):
+    def __init__(self, n, writeToFile):
         self.nQueens = n
         self.state = [i for i in range(self.nQueens)]
+        super().__init__(writeToFile)
     
-    def Next(self, state) -> list:
+    def next(self, state) -> list:
         neighbors = []
         for ind1 in range(self.nQueens):
             for ind2 in range(ind1 + 1, self.nQueens):
@@ -51,7 +97,7 @@ class nQueensState(stateInterface):
                 state[ind1], state[ind2] = state[ind2], state[ind1]
         return neighbors
     
-    def Value(self, state) -> int:
+    def value(self, state) -> int:
         def queensClashing(q1, q2):
             q1row, q1col = q1
             q2row, q2col = q2
@@ -66,6 +112,23 @@ class nQueensState(stateInterface):
                 ind2 += 1
         return error
     
+    def restart(self) -> list:
+        random.shuffle(self.state)
+        return self.state
+    
+    def tiebreaker(self, possibilities, visitedList = []) -> list:
+        assert len(visitedList) != 0 or len(possibilities) > 1, "tiebreaker should only kick in when it's needed"
+        error = self.value(possibilities[0])
+        index = 0
+        while index < len(possibilities):
+            state = possibilities[index]
+            assert self.value(state) == error, "all states in possibilities should have the same error"
+            if state in visitedList:
+                possibilities.remove(state)
+            else:
+                index += 1
+        return possibilities[random.randint(0, len(possibilities) - 1)]
+    
     def printThings(self):
         print("numberOfQueens: " + str(self.nQueens))
         print("state: " + str(self.state))
@@ -74,18 +137,29 @@ class nQueensState(stateInterface):
 class knapsackState(stateInterface):
     state = None
     T, M = -1, -1
-    objects = {}
+    __objects = {}
     allObjects = []
-    def __init__(self, jsonFile):
+    def __init__(self, jsonFile, writeToFile):
+        class objectClass:
+            name = None
+            value = None
+            weight = None
+            def __init__(self, name, value, weight):
+                self.name = name
+                self.value = int(value)
+                self.weight = int(weight)
+            def __str__(self):
+                return f'{self.name} = [{self.value}, {self.weight}]'
+        super().__init__(writeToFile)
         jsonFile = open(jsonFile)
         data = json.load(jsonFile)
         self.T, self.M = data['T'], data['M']
         for item in data['Items']:
-            self.objects[item['name']] = item
+            self.__objects[item['name']] = objectClass(name = item['name'], value = item['V'], weight = item['W'])
             self.allObjects.append(item['name'])
         self.state = data['Start']
 
-    def Next(self, state) -> list:
+    def next(self, state) -> list:
         diff = list(set(self.allObjects) - set(state))
         diff.sort()
         neighbors = []
@@ -110,25 +184,57 @@ class knapsackState(stateInterface):
                 neighbors.append(neighbor)
         
         return neighbors
-    
-    def Value(self, state) -> int:
-        totalWeight, totalValue = 0, 0
-        for object in state:
-            totalWeight += self.objects[object]['W']
-            totalValue += self.objects[object]['V']
+
+    def __getTotalValueAndWeight(self, givenState):
+        totalValue, totalWeight = 0, 0
+        for item in givenState:
+            totalValue += self.__objects[item].value
+            totalWeight += self.__objects[item].weight
+        return totalValue, totalWeight
+
+    def value(self, givenState) -> int:
+        totalValue, totalWeight = self.__getTotalValueAndWeight(givenState)
         return max(totalWeight - self.M, 0) + max(self.T - totalValue, 0)
 
+    def restart(self) -> list:
+        self.state = random.sample(self.allObjects, random.randint(1, len(self.allObjects)))
+        self.state.sort()
+        return self.state
+
+    def tiebreaker(self, possibilities, visitedList = []) -> list:
+        assert len(visitedList) != 0 or len(possibilities) > 1, "tiebreaker should only kick in when it's needed"
+        error = self.value(possibilities[0])
+        selectedState = possibilities[0]
+        value, weight = self.__getTotalValueAndWeight(selectedState)
+        index = 1
+        while index < len(possibilities):
+            state = possibilities[index]
+            assert self.value(state) == error, "all states in possibilities should have the same error"
+            if state in visitedList:
+                possibilities.remove(state)
+                continue
+            curValue, curWeight = self.__getTotalValueAndWeight(state)
+            if curValue > value or (curValue == value and curWeight < weight):
+                selectedState = state
+            index += 1
+        if selectedState in visitedList:
+            return None
+        else:
+            return selectedState
+    
     def printThings(self):
         print(self.state)
-        for item, value in self.objects.items():
-            print(item + ": " + str(value))
+        print("T: " + str(self.T))
+        print("M: " + str(self.M))
+        for item, value in self.__objects.items():
+            print(str(value))
 
 
 def getObject(args):
     if args.N == -1:
-        return knapsackState(args.knapsackFile)
+        return knapsackState(args.knapsackFile, args.w)
     else:
-        return nQueensState(args.N)
+        return nQueensState(args.N, args.w)
 
 
 def print_args(args):
@@ -137,11 +243,6 @@ def print_args(args):
     print("-verbose: " + str(args.verbose))
     print("-sideways: " + str(args.sideways))
     print("-restarts: " + str(args.restarts))
-
-
-def intChecker(givenInput):
-    num = int(givenInput)
-    return num
 
 
 def verifyIfGoodArgumentsGiven(args):
@@ -164,37 +265,10 @@ def parse_args(args = None):
         help = "the number of queens in the N-Queens problem")
     parser.add_argument("-verbose", required = False, default = False, action = 'store_true',\
         help = "verbose flag somethign something")#TODO: write better description
-    # TODO: Improve bad input handling
-    parser.add_argument("-sideways", type = intChecker, nargs = '?', required = False, const = 0, default = 0, \
+    parser.add_argument("-sideways", type = int, nargs = '?', required = False, const = 0, default = 0, \
         help = "put the count of sideways steps allowed; default value = 0")
     parser.add_argument("-restarts", type = int, required = False, default = 0, \
         help = "the number of random restarts allowed; default = 0")
+    parser.add_argument("-w", required = False, default = False, action = 'store_true',\
+        help = "use this tag to write the output to file called 'output.out' in the same directory")
     return parser.parse_args()
-
-
-def writeState(state, error):
-    listLength = len(state)
-    write("[", end = "")
-    for index, object in enumerate(state):
-        if index < listLength - 1:
-            write(object, end = " ")
-        else:
-            write(str(object) + "] = " + str(error))
-
-
-def printState(state, error):
-    listLength = len(state)
-    print("[", end = "")
-    for index, object in enumerate(state):
-        if index < listLength - 1:
-            print(object, end = " ")
-        else:
-            print(object + "] = " + str(error))
-
-
-@static_vars(outFile=None)
-def write(string, end = "\n", fileName = "./output.out"):
-    if write.outFile == None:
-        write.outFile = open(fileName, 'w')
-    string = str(string)
-    write.outFile.write(string + end)
