@@ -1,6 +1,6 @@
 import argparse
-import numpy as np
 import json
+import copy
 
 class ParserMeta(type):
     """A Parser metaclass that will be used for parser class creation.
@@ -10,21 +10,21 @@ class ParserMeta(type):
 
     def __subclasscheck__(cls, subclass):
         # TODO: Check if the functions names are correct
-        return (hasattr(subclass, 'actions') and
-                callable(subclass.actions) and
-                subclass.actions.__annotations__["return"] == list and
-                hasattr(subclass, 'computeError') and
-                callable(subclass.computeError) and
-                subclass.computeError.__annotations__["return"] == int)# and
+        return (hasattr(subclass, 'Next') and
+                callable(subclass.Next) and
+                subclass.Next.__annotations__["return"] == list and
+                hasattr(subclass, 'Value') and
+                callable(subclass.Value) and
+                subclass.Value.__annotations__["return"] == int)# and
 
 
 class stateInterface(metaclass = ParserMeta):
-    def actions(state) -> list:
+    def Next(state) -> list:
         pass
-    def computeError(state) -> int:
+    def Value(state) -> int:
         pass
     def goal(self, state) -> bool:
-        return self.computeError(state) == 0
+        return self.Value(state) == 0
 
 
 def static_vars(**kwargs):
@@ -42,14 +42,32 @@ class nQueensState(stateInterface):
         self.nQueens = n
         self.state = [i for i in range(self.nQueens)]
     
-    def actions(state) -> list:
-        return ["this", "fine?"]
+    def Next(self, state) -> list:
+        neighbors = []
+        for ind1 in range(self.nQueens):
+            for ind2 in range(ind1 + 1, self.nQueens):
+                state[ind1], state[ind2] = state[ind2], state[ind1]
+                neighbors.append(copy.deepcopy(state))
+                state[ind1], state[ind2] = state[ind2], state[ind1]
+        return neighbors
     
-    def computeError(state) -> int:
-        return 0
+    def Value(self, state) -> int:
+        def queensClashing(q1, q2):
+            q1row, q1col = q1
+            q2row, q2col = q2
+            if q1row == q2row or q1col == q2col or q1row + q1col == q2row + q2col or q1row - q1col == q2row - q2col:
+                return 1
+            return 0
+        error = 0
+        for index, row in enumerate(state):
+            ind2 = index + 1
+            for row2 in state[ind2:]:
+                error += queensClashing((index, row), (ind2, row2))
+                ind2 += 1
+        return error
     
     def printThings(self):
-        print("numberOfQueens: " + str(self.numberOfQueens))
+        print("numberOfQueens: " + str(self.nQueens))
         print("state: " + str(self.state))
 
 
@@ -67,27 +85,33 @@ class knapsackState(stateInterface):
             self.allObjects.append(item['name'])
         self.state = data['Start']
 
-    def actions(self, state) -> list:
+    def Next(self, state) -> list:
         diff = list(set(self.allObjects) - set(state))
         diff.sort()
         neighbors = []
         
         # Add an object
         for object in diff:
-            neighbors.append(state + [object])
+            neighbor = state + [object]
+            neighbor.sort()
+            neighbors.append(neighbor)
         
         # Remove an object
         for object in state:
-            neighbors.append(list(set(state) - set(object)))
+            neighbor = list(set(state) - set(object))
+            neighbor.sort()
+            neighbors.append(neighbor)
 
         # Swap an object
         for object in diff:
             for element in state:
-                neighbors.append(list(set.union(set(state) - set(element), set(object))))
+                neighbor = list(set.union(set(state) - set(element), set(object)))
+                neighbor.sort()
+                neighbors.append(neighbor)
         
         return neighbors
     
-    def computeError(self, state) -> int:
+    def Value(self, state) -> int:
         totalWeight, totalValue = 0, 0
         for object in state:
             totalWeight += self.objects[object]['W']
@@ -117,7 +141,6 @@ def print_args(args):
 
 def intChecker(givenInput):
     num = int(givenInput)
-    print(num)
     return num
 
 
@@ -156,7 +179,7 @@ def writeState(state, error):
         if index < listLength - 1:
             write(object, end = " ")
         else:
-            write(object + "] = " + str(error))
+            write(str(object) + "] = " + str(error))
 
 
 def printState(state, error):
@@ -173,4 +196,5 @@ def printState(state, error):
 def write(string, end = "\n", fileName = "./output.out"):
     if write.outFile == None:
         write.outFile = open(fileName, 'w')
+    string = str(string)
     write.outFile.write(string + end)
