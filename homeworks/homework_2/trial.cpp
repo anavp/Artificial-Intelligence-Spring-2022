@@ -2,7 +2,7 @@
 * AUTHOR : Anav Prasad
 * Nick : graworth
 ****************************************************/
-#include <bits/stdc++.h>
+#include <stdc++.h>
 
 using namespace std;
 

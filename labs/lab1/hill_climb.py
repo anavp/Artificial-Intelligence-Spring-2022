@@ -1,6 +1,7 @@
+from distutils.debug import DEBUG
 from helper import *
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 
 def getNeighbors(state):
@@ -8,6 +9,8 @@ def getNeighbors(state):
 
 
 def basicHillClimbing(initial, goal, actions, h):
+    print(actions(initial))
+    return
     state = initial
     while not goal(state):
       neighbors = []
@@ -19,15 +22,26 @@ def basicHillClimbing(initial, goal, actions, h):
     return state
 
 
-def processHillClimbing(verbose, sideways, restarts):
-    print("doing hill climbing")
+def processHillClimbing(obj, verbose, sideways, restarts):
+    basicHillClimbing(obj.state, obj.goal, obj.actions, obj.computeError)
 
 
 if __name__ == '__main__':
     args = parse_args()
-    assert args.knapsackFile != "not_defined" or args.N > -1, "Either number of queens should be defined or a knapsack file must be passed"
     
+    verifyIfGoodArgumentsGiven(args)
+    assertThatTheClassIsGood()
+
     if (DEBUG_MODE):
         print_args(args)
 
-    processHillClimbing(args.verbose, args.sideways, args.restarts)
+    if args.N == -1:
+        obj = knapsackState(args.knapsackFile)
+        if DEBUG_MODE:
+            obj.printAllObjects()
+    else:
+        obj = nQueensState(args.N)
+        if DEBUG_MODE:
+            obj.printNumOfQueens()
+
+    processHillClimbing(obj, args.verbose, args.sideways, args.restarts)
