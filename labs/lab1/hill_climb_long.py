@@ -1,9 +1,23 @@
-from helper import *
+from helper_long import *
+
+DEBUG_MODE = False
+
+# TODO: Tie breakers: done I think
+# TODO: Queens, knapsack, hill climbing??????? There's no third case I think
+# TODO: interface methods: value, next, restart, print: done
+# TODO: maintain a visited list to avoid sideways cycles: done I think
+# TODO: Bad input handling: argparsing does that automatically i think
+# TODO: Fix tiebreaker : done
+# TODO: enabling of sideways somehow randomizes the neigbors selection for bethe. Figure out what's happening: Prof is somehow not using tiebreakers when sideways = 0. I am not doing that
+# TODO: Readme file
+
 
 def moveSidewaysOrRestart(sCounter, rCounter, maxSteps, maxRestarts, sPossible, obj, visitedList, possibilities):
     if sPossible and sCounter < maxSteps:
         state = obj.tiebreaker(possibilities, visitedList)
-        if state is not None:
+        if state is None:
+            pass
+        else:
             sCounter += 1
             visitedList.append(state)
             obj.printState(state, "choose(sideways): ")
@@ -18,6 +32,7 @@ def moveSidewaysOrRestart(sCounter, rCounter, maxSteps, maxRestarts, sPossible, 
         obj.printState(prefix = "not found")
         exit(0)
     return state, sCounter, rCounter, visitedList
+
 
 def hillClimbing(obj, verbose, maxSteps, maxRestarts):
     obj.printState(obj.state, "Start: ")
@@ -59,8 +74,19 @@ def hillClimbing(obj, verbose, maxSteps, maxRestarts):
             obj.printState(state, "choose: ")
     obj.printState(state, "Goal: ")
 
+
 if __name__ == '__main__':
     args = parse_args()
+    
     verifyIfGoodArgumentsGiven(args)
+    assertThatTheClassIsGood()
+
+    if (DEBUG_MODE):
+        print_args(args)
+
     obj = getObject(args)
+
+    if DEBUG_MODE:
+        obj.printThings()
+    
     hillClimbing(obj, args.verbose, args.sideways, args.restarts)

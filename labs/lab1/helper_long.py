@@ -1,3 +1,4 @@
+from curses.ascii import isdigit
 import json
 import copy
 import random
@@ -10,6 +11,7 @@ def static_vars(**kwargs):
         return func
     return decorate
 
+
 class ParserMeta(type):
     """A Parser metaclass that will be used for parser class creation.
     """
@@ -17,6 +19,7 @@ class ParserMeta(type):
         return cls.__subclasscheck__(type(instance))
 
     def __subclasscheck__(cls, subclass):
+        # TODO: Check if the functions names are correct
         return (hasattr(subclass, 'next') and
                 callable(subclass.next) and
                 subclass.next.__annotations__["return"] == list and
@@ -28,7 +31,9 @@ class ParserMeta(type):
                 subclass.restart.__annotations__["return"] == list and
                 hasattr(subclass, 'tiebreaker') and
                 callable(subclass.tiebreaker) and
-                subclass.tiebreaker.__annotations__["return"] == list)
+                subclass.tiebreaker.__annotations__["return"] == list
+        )
+
 
 class stateInterface(metaclass = ParserMeta):
     __writeToFile = None
@@ -61,10 +66,13 @@ class stateInterface(metaclass = ParserMeta):
             return
         listLength = len(state)
         strForPrint += "["
+        # for index, object in enumerate(state):
         for index, object in enumerate(state):
-            strForPrint += str(object)
+            # strForPrint += str(object) + " "
             if index < listLength - 1:
-                strForPrint += " "
+                strForPrint += str(object) + " "
+            else:
+                strForPrint += str(object)
         strForPrint += "] = " + str(self.value(state))
         self.__write(strForPrint, self.__writeToFile)
 
@@ -109,15 +117,22 @@ class nQueensState(stateInterface):
         return self.state
     
     def tiebreaker(self, possibilities, visitedList = []) -> list:
+        assert len(visitedList) != 0 or len(possibilities) > 1, "tiebreaker should only kick in when it's needed"
         error = self.value(possibilities[0])
         index = 0
         while index < len(possibilities):
             state = possibilities[index]
+            assert self.value(state) == error, "all states in possibilities should have the same error"
             if state in visitedList:
                 possibilities.remove(state)
             else:
                 index += 1
         return possibilities[random.randint(0, len(possibilities) - 1)]
+    
+    def printThings(self):
+        print("numberOfQueens: " + str(self.nQueens))
+        print("state: " + str(self.state))
+
 
 class knapsackState(stateInterface):
     state = None
@@ -126,9 +141,13 @@ class knapsackState(stateInterface):
     allObjects = []
     def __init__(self, jsonFile, writeToFile):
         class objectClass:
-            name, value, weight = None, None, None
+            name = None
+            value = None
+            weight = None
             def __init__(self, name, value, weight):
-                self.name, self.value, self.weight = name, int(value), int(weight)
+                self.name = name
+                self.value = int(value)
+                self.weight = int(weight)
             def __str__(self):
                 return f'{self.name} = [{self.value}, {self.weight}]'
         super().__init__(writeToFile)
@@ -183,11 +202,14 @@ class knapsackState(stateInterface):
         return self.state
 
     def tiebreaker(self, possibilities, visitedList = []) -> list:
+        assert len(visitedList) != 0 or len(possibilities) > 1, "tiebreaker should only kick in when it's needed"
+        error = self.value(possibilities[0])
         selectedState = possibilities[0]
         value, weight = self.__getTotalValueAndWeight(selectedState)
         index = 1
         while index < len(possibilities):
             state = possibilities[index]
+            assert self.value(state) == error, "all states in possibilities should have the same error"
             if state in visitedList:
                 possibilities.remove(state)
                 continue
@@ -199,6 +221,14 @@ class knapsackState(stateInterface):
             return None
         else:
             return selectedState
+    
+    def printThings(self):
+        print(self.state)
+        print("T: " + str(self.T))
+        print("M: " + str(self.M))
+        for item, value in self.__objects.items():
+            print(str(value))
+
 
 def getObject(args):
     if args.N == -1:
@@ -206,22 +236,37 @@ def getObject(args):
     else:
         return nQueensState(args.N, args.w)
 
+
+def print_args(args):
+    print("knapsack-file-path: " + args.knapsackFile)
+    print("-N:" + str(args.N))
+    print("-verbose: " + str(args.verbose))
+    print("-sideways: " + str(args.sideways))
+    print("-restarts: " + str(args.restarts))
+
+
 def verifyIfGoodArgumentsGiven(args):
     if args.knapsackFile == "not_defined" and args.N == -1:
         print("ERROR: Either number of queens should be defined or a knapsack file must be passed")
         print("     Have a look at the positional and optional arguments by running 'python hillClimb.py --help'")
         exit(0)
 
+
+def assertThatTheClassIsGood():
+    assert issubclass(nQueensState, stateInterface), "nQueensState is not a subclass of stateInterface"
+    assert issubclass(knapsackState, stateInterface), "knapsackState is not a subclass of stateInterface"
+
+
 def parse_args(args = None):
-    parser = argparse.ArgumentParser(description="CSCI-GA.2560 Artificial Intelligence Lab1 Hill Climbing Code")
+    parser = argparse.ArgumentParser(description="Hill climbing code for AI course")
     parser.add_argument("knapsackFile", metavar = 'knapsack-file-path', type = str, nargs = '?', default="not_defined",\
         help = "pass the path of the knapsack input file")
     parser.add_argument("-N", type = int, required = False, default = -1,\
         help = "the number of queens in the N-Queens problem")
     parser.add_argument("-verbose", required = False, default = False, action = 'store_true',\
-        help = "use this tag to generate the verbose output")
+        help = "verbose flag somethign something")#TODO: write better description
     parser.add_argument("-sideways", type = int, nargs = '?', required = False, const = 0, default = 0, \
-        help = "the number of sideways steps allowed; default = 0")
+        help = "put the count of sideways steps allowed; default value = 0")
     parser.add_argument("-restarts", type = int, required = False, default = 0, \
         help = "the number of random restarts allowed; default = 0")
     parser.add_argument("-w", required = False, default = False, action = 'store_true',\
