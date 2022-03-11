@@ -1,2 +1,4 @@
 Textbooks/*
 .DS_Store
+*.out
+labs/lab2/__pycache__/
