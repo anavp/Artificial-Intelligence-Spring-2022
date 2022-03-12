@@ -38,7 +38,7 @@ def print_infixes(postfixes):
 
 def to_store_infixes(postfixes, outputs):
     for index, postfix in enumerate(postfixes):
-        assert index in list(outputs)
+        # assert index in list(outputs)
         outputs[index].append(postfix_to_infix(postfix))
     return outputs
 
@@ -89,12 +89,12 @@ def generate_all_syms_dict(cnf_data):
     all_symbols_dict = dict()
     for line in cnf_data:
         for atom in line:
-            assert len(atom) > 0
+            # assert len(atom) > 0
             neg = False
             if atom[0] == '!':
                 neg = True
                 atom = atom[1:]
-            assert len(atom) > 0
+            # assert len(atom) > 0
             if atom not in all_symbols_dict.keys():
                 all_symbols_dict[atom] = neg
             elif all_symbols_dict[atom] != neg:
