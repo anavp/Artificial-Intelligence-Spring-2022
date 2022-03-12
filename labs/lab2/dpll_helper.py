@@ -1,13 +1,7 @@
-import argparse
-
+# from io_helper import *
+# from io_helper import print_func
+import io_helper
 DEBUG_MODE = False
-
-def static_vars(**kwargs):
-    def decorate(func):
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
-    return decorate
 
 def assert_correct_args(args):
     assert args.mode == "cnf" or args.mode == "bnf" or args.mode == "dpll"
@@ -19,9 +13,10 @@ def check_for_empty_lines(given_list) -> bool:
     return False
 
 def assign_remaining(state):
+    # TODO: Write "unbound: " here; in verbose mode??
     for sym in state.keys():
         if state[sym] is None:
-            state[sym] = True
+            state[sym] = False
     return state
 
 def find_pure_literal(all_sym):
@@ -50,8 +45,8 @@ def find_unit_literal(lines):
 def find_easy_choice(lines, all_sym):
     choice = find_pure_literal(all_sym)
     if choice is not None:
-        if DEBUG_MODE:
-            print_func("found pure literal")
+        # if DEBUG_MODE:
+        #     io_helper.print_func("found pure literal")
         return choice
     return find_unit_literal(lines)
 
@@ -153,47 +148,3 @@ def init_all_sym(lines, all_sym):
     for sym in all_sym.keys():
         all_sym[sym] = reevaluation(sym, lines)
     return all_sym
-
-def print_lines(lines):
-    for line in lines:
-        # assert len(line) > 0
-        if len(line) == 0:
-            print_func("")
-            continue
-        for sym in line[:-1]:
-            print_func(sym, end = " ")
-        print_func(line[-1])
-
-def print_state(state):
-    syms = list(state)
-    syms.sort()
-    for sym in syms:
-        print_func(sym + " = " + str_bool(state[sym]))
-
-def str_bool(val):
-    if val:
-        return "true"
-    return "false"
-
-@static_vars(outFile=None)
-def print_func(message, end = "\n", init = None):
-    if init is not None:
-        print_func.outFile = open(init, 'w')
-        return
-    if print_func.outFile is not None:
-        print_func.outFile.write(message + end)
-    else:
-        print(message, end)
-    
-
-def parse_args(args = None):
-    parser = argparse.ArgumentParser(description="CSCI-GA.2560 Artificial Intelligence Lab2 BNF to CNF and DPLL solver code")
-    parser.add_argument("-v", required = False, default = False, action = 'store_true',\
-        help = "use this tag to generate the verbose output")
-    parser.add_argument("-mode", type = str, required = True, default = -1,\
-        help = "the number of queens in the N-Queens problem")
-    parser.add_argument("mode_file", metavar = 'mode_file_path', type = str,\
-        help = "pass the path of the mode's input file")
-    parser.add_argument("-w", required = False, default = False, action = 'store_true',\
-        help = "use this tag to write the output to file called 'output.out' in the same directory")
-    return parser.parse_args()
