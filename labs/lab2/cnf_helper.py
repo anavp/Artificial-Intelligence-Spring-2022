@@ -66,6 +66,7 @@ def remove_double_implies(bnf_lines):
                 begun = False
                 # line = line[:index] + first + [NEGATION] + second + [OR] + copy.deepcopy(second) + [NEGATION] + copy.deepcopy(first) + [OR, AND] + line[end_index + 1:]
                 line = line[:index] + first + second + [IMPLIES] + copy.deepcopy(second) + copy.deepcopy(first) + [IMPLIES, AND] + line[end_index + 1:]
+                index += 2 * len(first) + 2 * len(second) + 3
                 end_index, mid_index = -1, -1
                 first, second = None, None
             index -= 1
@@ -77,12 +78,14 @@ def remove_implies(bnf_lines):
         index = len(line) - 1
         begun = False
         curcount = -1
+        end_index = -1
         while index >= 0:
             if not begun and line[index] != IMPLIES:
                 index -= 1
                 continue
             if not begun:
                 line[index] = OR
+                end_index = index
                 index -= 1
                 begun = True
                 curcount = 1
@@ -99,9 +102,76 @@ def remove_implies(bnf_lines):
                     curcount += 1
             if curcount == 0:
                 line.insert(index, NEGATION)
+                index = end_index + 1
+                end_index = -1
                 begun = False
                 curcount = -1
             index -= 1
         bnf_lines[ind] = line
         assert not begun
     return bnf_lines
+
+def update_negation(bnf_lines):
+    for ind, line in enumerate(bnf_lines):
+        begun = False
+        first, second = None, None
+        curcount = -1
+        index = len(line) - 1
+        end_index, mid_index = -1, -1
+        while index >= 0:
+            if not begun and line[index] != NEGATION:
+                index -= 1
+                continue
+            if not begun:
+                assert index > 0
+                if line[index - 1] == NEGATION:
+                    line.pop(index)
+                    line.pop(index - 1)
+                    index -= 2
+                    begun = False
+                    continue
+                if is_operator(line[index - 1]):
+                    assert curcount == -1
+                    assert line[index - 1] == OR or line[index - 1] == AND
+                    if line[index - 1] == OR:
+                        line[index - 1] = AND
+                    else:
+                        line[index - 1] = OR
+                    line.pop(index)
+                    end_index = index - 1
+                    index -= 2
+                    begun = True
+                    curcount = 1
+                else:
+                    index -= 2
+                continue
+            assert begun and curcount > 0 and not is_bracket(line[index])
+            if is_atom(line[index]):
+                curcount -= 1
+            elif is_bracket(line[index]):
+                pass
+            elif is_operator(line[index]):
+                if line[index] == NEGATION:
+                    curcount += 0
+                else:
+                    curcount += 1
+            if curcount == 0 and second is None:
+                assert end_index != -1 and mid_index == -1
+                second = copy.deepcopy(line[index : end_index])
+                curcount = 1
+                mid_index = index
+            elif curcount == 0:
+                assert end_index != -1 and mid_index != -1 and first is None and second is not None
+                first = copy.deepcopy(line[index:mid_index])
+                curcount = -1
+                begun = False
+                line = line[:index] + first + [NEGATION] + second + [NEGATION] + line[end_index:]
+                index += len(first) + len(second) + 2
+                end_index, mid_index = -1, -1
+                first, second = None, None
+            index -= 1
+        bnf_lines[ind] = line
+    return bnf_lines
+
+def update_and_or(bnf_data):
+    pass

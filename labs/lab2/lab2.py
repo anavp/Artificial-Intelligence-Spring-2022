@@ -12,7 +12,7 @@ def bnf_to_cnf(bnf_data, verbose):
     io_helper.print_func("beginning: ")
     io_helper.print_lines(bnf_data)
     cnf_lines = []
-    # step 1
+    # Step 1:
     bnf_data = cnf_helper.remove_double_implies(bnf_data)
     io_helper.print_func("after step 1: ")
     io_helper.print_lines(bnf_data)
@@ -23,6 +23,18 @@ def bnf_to_cnf(bnf_data, verbose):
     io_helper.print_func("after step 2: ")
     io_helper.print_lines(bnf_data)
     io_helper.print_infixes(bnf_data)
+
+    # Step 3:
+    bnf_data = cnf_helper.update_negation(bnf_data)
+    io_helper.print_func("after step 3: ")
+    io_helper.print_lines(bnf_data)
+    io_helper.print_infixes(bnf_data)
+
+    # Step 4:
+    bnf_data = cnf_helper.update_and_or(bnf_data)
+    # io_helper.print_func("after step 4: ")
+    # io_helper.print_lines(bnf_data)
+    # io_helper.print_infixes(bnf_data)
     pass
 
 def recursive_dpll(lines, all_sym, cur_state, verbose = False):
