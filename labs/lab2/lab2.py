@@ -2,7 +2,6 @@ import dpll_helper
 import io_helper
 import cnf_helper
 import copy
-# TODO: Figure what exactly to print in verbose mode and what not to print when not
 
 def bnf_to_cnf(bnf_data, verbose):
     verbose_outputs = {}
@@ -51,8 +50,6 @@ def recursive_dpll(lines, all_sym, cur_state, verbose):
 
     if selection is not None:
         choice, value, pure_literal = selection
-        if dpll_helper.DEBUG_MODE:
-            io_helper.print_func("trying easy choice: " + str(selection))
         assert choice in cur_state.keys()
         assert cur_state[choice] is None
         cur_state[choice] = value
@@ -62,12 +59,7 @@ def recursive_dpll(lines, all_sym, cur_state, verbose):
             else:
                 io_helper.print_func("easy case: unit literal " + choice + " = " + io_helper.str_bool(value))
         lines, all_sym = dpll_helper.update(lines, all_sym, (choice, value), verbose)
-        if verbose:
-            # io_helper.print_lines(lines)
-            if dpll_helper.DEBUG_MODE:
-                io_helper.print_func(str(cur_state))
         return recursive_dpll(lines, all_sym, cur_state, verbose)
-        
     
     # Make Hard Choice
     selection = dpll_helper.make_hard_choice(cur_state)
@@ -76,10 +68,8 @@ def recursive_dpll(lines, all_sym, cur_state, verbose):
     all_sym_copy = copy.deepcopy(all_sym)
     lines_copy = copy.deepcopy(lines)
     cur_state_copy[selection] = True
-    # TODO: Handle the contradiction printing here somehow
     if verbose:
         io_helper.print_func("hard case, guess: " + selection + "=true")
-        # io_helper.print_lines(lines_copy)
     lines_copy, all_sym_copy = dpll_helper.update(lines_copy, all_sym_copy, (selection, True), verbose)
     cur_state_copy = recursive_dpll(lines_copy, all_sym_copy, cur_state_copy, verbose)
     if cur_state_copy is None:
@@ -87,7 +77,6 @@ def recursive_dpll(lines, all_sym, cur_state, verbose):
         if verbose:
             io_helper.print_func("fail", end = "|")
             io_helper.print_func("hard case, try: " + selection + "=false")
-            # io_helper.print_lines(lines)
         lines, all_sym = dpll_helper.update(lines, all_sym, (selection, False), verbose)
         return recursive_dpll(lines, all_sym, cur_state, verbose)
     else:

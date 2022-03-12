@@ -1,6 +1,4 @@
-# from io_helper import print_func
 import copy
-# from infix_postfix_helper import postfix_to_infix_list
 NEGATION = '!'
 AND = '&'
 OR = '|'
@@ -64,7 +62,6 @@ def remove_double_implies(bnf_lines):
                 first = copy.deepcopy(line[index:mid_index])
                 curcount = -1
                 begun = False
-                # line = line[:index] + first + [NEGATION] + second + [OR] + copy.deepcopy(second) + [NEGATION] + copy.deepcopy(first) + [OR, AND] + line[end_index + 1:]
                 line = line[:index] + first + second + [IMPLIES] + copy.deepcopy(second) + copy.deepcopy(first) + [IMPLIES, AND] + line[end_index + 1:]
                 index += 2 * len(first) + 2 * len(second) + 3
                 end_index, mid_index = -1, -1
@@ -208,8 +205,6 @@ def update_and_or(bnf_data, first_iteration = True):
                     second_second = second[1]
                     second_token = second[2]
                     second = second_first + second_second + [second_token]
-                # elif len(second) == 2:
-                #     pass
                 else:
                     assert len(second) > 0
                 if len(first) == 3:
@@ -220,21 +215,14 @@ def update_and_or(bnf_data, first_iteration = True):
                 else:
                     assert len(first) > 0
                 if AND in first or AND in second:
-                # if AND in line[:index]:
                     assert first_iteration or ((first_token is None and second_token is not None and second_token == AND) or (second_token is None and first_token is not None and first_token == AND) or (first_token is not None and second_token is not None and (first_token == AND or second_token == AND)))
                     if first_token is not None and first_token == AND:
-                        # print("first")
-                        # print(index)
-                        # print(line[index])
                         first_ans = first_first + second + [OR]
                         second_ans = first_second + second + [OR]
                         conversion_stack.append([first_ans, second_ans, AND])
                         change = True
                         continue
                     else:
-                        # print("second")
-                        # print(index)
-                        # print(line[index])
                         assert second_token is not None and second_token == AND
                         first_ans = first + second_first + [OR]
                         second_ans = first + second_second + [OR]
@@ -256,7 +244,6 @@ def update_and_or(bnf_data, first_iteration = True):
                     second = second_first + second_second + [second_token]
                 else:
                     assert len(second) > 0
-                    # second = second[0]
                 if len(first) == 3:
                     first_first = first[0]
                     first_second = first[1]
@@ -320,6 +307,7 @@ def split_into_cnf(bnf_lines):
                 cnf_lines.append(line[start:index])
                 start = index + 1
         cnf_lines.append(line[start:])
+    
     # Removing |
     for index, line in enumerate(cnf_lines):
         while OR in line:

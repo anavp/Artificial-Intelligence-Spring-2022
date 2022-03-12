@@ -19,14 +19,7 @@ def get_line_for_print(line, end = "\n") -> str:
 
 def print_lines(lines):
     for line in lines:
-        # assert len(line) > 0
         print_func(get_line_for_print(line, end = ""))
-        # if len(line) == 0:
-        #     print_func("")
-        #     continue
-        # for sym in line[:-1]:
-        #     print_func(sym, end = " ")
-        # print_func(line[-1])
 
 def print_state(state):
     syms = list(state)
@@ -52,7 +45,6 @@ def to_store_infixes(postfixes, outputs):
 def print_verbose_dict(outputs):
     for key in outputs:
         print_list(outputs[key])
-        # print_func("")
 
 @static_vars(outFile=None)
 def print_func(message, end = "\n", init = None):
@@ -85,25 +77,17 @@ def read_bnf_file(bnf_file):
     bnf_file = open_file(bnf_file, 'r')
     bnf_data = bnf_file.readlines()
     bnf_data = [line.strip("\n") for line in bnf_data]
-    # print_list(bnf_data)
-    # print_func("done")
     bnf_file.close()
     postfix_exprs = []
     for line in bnf_data:
         if len(line) == 0:
             continue
-        # print(line)
-        # line = line.strip("\n")
         postfix_exprs.append(infix_to_postfix(line))
-        # print_func("current postfix line: ", end = "")
-        # print_func(str(postfix_exprs[-1]))
     return postfix_exprs
 
 def generate_all_syms_dict(cnf_data):
     all_symbols_dict = dict()
     for line in cnf_data:
-        # atoms = line.strip('\n').split(' ', -1)
-        # cnf_lines.append(atoms)
         for atom in line:
             assert len(atom) > 0
             neg = False
@@ -125,17 +109,6 @@ def read_cnf_file(cnf_file):
     for line in cnf_data:
         atoms = line.strip('\n').split(' ', -1)
         cnf_lines.append(atoms)
-        # for atom in atoms:
-        #     assert len(atom) > 0
-        #     neg = False
-        #     if atom[0] == '!':
-        #         neg = True
-        #         atom = atom[1:]
-        #     assert len(atom) > 0
-        #     if atom not in all_symbols_dict.keys():
-        #         all_symbols_dict[atom] = neg
-        #     elif all_symbols_dict[atom] != neg:
-        #         all_symbols_dict[atom] = None
     all_symbols_dict = generate_all_syms_dict(cnf_lines)
     return cnf_lines, all_symbols_dict
 
@@ -156,4 +129,3 @@ def init():
     if args.w:
         print_func("", "", "./output.out")
     return args
-    # dpll_helper.assert_correct_args(args)

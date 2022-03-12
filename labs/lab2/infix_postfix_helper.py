@@ -1,5 +1,4 @@
 import cnf_helper
-import io_helper
 import re
 def add_required_spaces(bnf_string: str) -> str:
     """
@@ -28,12 +27,8 @@ def add_required_spaces(bnf_string: str) -> str:
 def infix_to_postfix(infix: str):
     # Add spaces around operators and brackets
     infix = add_required_spaces(infix)
-    # io_helper.print_func("after adding spaces")
-    # io_helper.print_func(str(infix))
     # Split the string into tokens
     infix = infix.strip().split()
-    # io_helper.print_func("after splitting: ")
-    # io_helper.print_func(str(infix))
     conversion_stack = list()
     postfix = list()
     for token in infix:
