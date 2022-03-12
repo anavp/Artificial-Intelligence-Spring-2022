@@ -3,15 +3,26 @@ import dpll_helper
 # from io_helper import *
 # from io_helper import print_func
 import io_helper
-# import cnf_helper
+import cnf_helper
 # import infix_postfix_helper
 import copy
 # TODO: Figure what exactly to print in verbose mode and what not to print when not
 
-def bnf_to_cnf(bnf_data):
-    postfix_exprs = bnf_data
-    # io_helper.print_func(str(postfix_exprs))
-    io_helper.print_lines(postfix_exprs)
+def bnf_to_cnf(bnf_data, verbose):
+    io_helper.print_func("beginning: ")
+    io_helper.print_lines(bnf_data)
+    cnf_lines = []
+    # step 1
+    bnf_data = cnf_helper.remove_double_implies(bnf_data)
+    io_helper.print_func("after step 1: ")
+    io_helper.print_lines(bnf_data)
+    io_helper.print_infixes(bnf_data)
+
+    # Step 2:
+    bnf_data = cnf_helper.remove_implies(bnf_data)
+    io_helper.print_func("after step 2: ")
+    io_helper.print_lines(bnf_data)
+    io_helper.print_infixes(bnf_data)
     pass
 
 def recursive_dpll(lines, all_sym, cur_state, verbose = False):
@@ -85,7 +96,7 @@ def mode_eval_and_running(args):
         dpll_solver(cnf_data, args.v)
     elif args.mode == 'cnf' or args.mode == 'solver':
         bnf_data = io_helper.read_bnf_file(args.mode_file)
-        cnf_data = bnf_to_cnf(bnf_data)
+        cnf_data = bnf_to_cnf(bnf_data, args.v)
     if args.mode == 'cnf':
         # TODO: Print cnf output
         pass

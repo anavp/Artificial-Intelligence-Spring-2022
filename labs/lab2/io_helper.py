@@ -1,5 +1,5 @@
 import argparse
-from infix_postfix_helper import infix_to_postfix
+from infix_postfix_helper import infix_to_postfix, postfix_to_infix
 
 def static_vars(**kwargs):
     def decorate(func):
@@ -28,6 +28,10 @@ def str_bool(val):
     if val:
         return "true"
     return "false"
+
+def print_infixes(postfixes):
+    for postfix in postfixes:
+        print_func(postfix_to_infix(postfix))
 
 @static_vars(outFile=None)
 def print_func(message, end = "\n", init = None):

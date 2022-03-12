@@ -1,4 +1,5 @@
 # from io_helper import print_func
+import copy
 
 NEGATION = '!'
 AND = '&'
@@ -24,3 +25,83 @@ def higher_precedence(operator1: str, operator2: str) -> bool:
 
 def get_precedence(operator: str) -> int:
     return len(ALL_OPERATORS) - ALL_OPERATORS.index(operator)
+
+def remove_double_implies(bnf_lines):
+    for ind, line in enumerate(bnf_lines):
+        begun = False
+        first, second = None, None
+        curcount = -1
+        index = len(line) - 1
+        end_index = -1
+        mid_index = -1
+        while index >= 0:
+            if not begun and line[index] != DOUBLE_IMPLIES:
+                index -= 1
+                continue
+            if not begun:
+                end_index = index
+                index -= 1
+                begun = True
+                curcount = 1
+                continue
+            assert begun and curcount > 0 and not is_bracket(line[index])
+            if is_atom(line[index]):
+                curcount -= 1
+            elif is_bracket(line[index]):
+                pass
+            elif is_operator(line[index]):
+                if line[index] == NEGATION:
+                    curcount += 0
+                else:
+                    curcount += 1
+            if curcount == 0 and second is None:
+                assert end_index != -1 and mid_index == -1
+                second = copy.deepcopy(line[index : end_index])
+                curcount = 1
+                mid_index = index
+            elif curcount == 0:
+                assert end_index != -1 and mid_index != -1 and first is None and second is not None
+                first = copy.deepcopy(line[index:mid_index])
+                curcount = -1
+                begun = False
+                # line = line[:index] + first + [NEGATION] + second + [OR] + copy.deepcopy(second) + [NEGATION] + copy.deepcopy(first) + [OR, AND] + line[end_index + 1:]
+                line = line[:index] + first + second + [IMPLIES] + copy.deepcopy(second) + copy.deepcopy(first) + [IMPLIES, AND] + line[end_index + 1:]
+                end_index, mid_index = -1, -1
+                first, second = None, None
+            index -= 1
+        bnf_lines[ind] = line
+    return bnf_lines
+
+def remove_implies(bnf_lines):
+    for ind, line in enumerate(bnf_lines):
+        index = len(line) - 1
+        begun = False
+        curcount = -1
+        while index >= 0:
+            if not begun and line[index] != IMPLIES:
+                index -= 1
+                continue
+            if not begun:
+                line[index] = OR
+                index -= 1
+                begun = True
+                curcount = 1
+                continue
+            assert begun and curcount > 0
+            if is_atom(line[index]):
+                curcount -= 1
+            elif is_bracket(line[index]):
+                pass
+            elif is_operator(line[index]):
+                if line[index] == NEGATION:
+                    curcount += 0
+                else:
+                    curcount += 1
+            if curcount == 0:
+                line.insert(index, NEGATION)
+                begun = False
+                curcount = -1
+            index -= 1
+        bnf_lines[ind] = line
+        assert not begun
+    return bnf_lines
