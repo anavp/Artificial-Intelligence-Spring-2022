@@ -13,7 +13,6 @@ def add_required_spaces(bnf_string: str) -> str:
     num = 0
     for index in occurrences:
         index += num
-        # assert index != 0
         if bnf_string[index - 1] == '<':
             continue
         bnf_string = bnf_string[:index] + " " + bnf_string[index:]
@@ -52,19 +51,14 @@ def infix_to_postfix(infix: str):
 def postfix_to_infix(postfix: list) -> str:
     conversion_stack = []
     for token in postfix:
-        # assert not cnf_helper.is_bracket(token)
         if cnf_helper.is_atom(token):
             conversion_stack.append(token)
             continue
-        # assert cnf_helper.is_operator(token)
         if token == cnf_helper.NEGATION:
-            # assert len(conversion_stack) > 0
             cur_val = cnf_helper.NEGATION + conversion_stack.pop() 
             conversion_stack.append(cur_val)
         else:
-            # assert len(conversion_stack) > 1
             second = conversion_stack.pop()
             first = conversion_stack.pop()
             conversion_stack.append("(" + first + " " + token + " " + second + ")")
-    # assert len(conversion_stack) == 1
     return conversion_stack.pop()

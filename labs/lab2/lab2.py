@@ -49,8 +49,6 @@ def recursive_dpll(lines, all_sym, cur_state, verbose):
 
     if selection is not None:
         choice, value, pure_literal = selection
-        # assert choice in cur_state.keys()
-        # assert cur_state[choice] is None
         cur_state[choice] = value
         if verbose:
             if pure_literal:
@@ -62,7 +60,6 @@ def recursive_dpll(lines, all_sym, cur_state, verbose):
     
     # Make Hard Choice
     selection = dpll_helper.make_hard_choice(cur_state)
-    # assert selection is not None and selection in cur_state.keys()
     cur_state_copy = copy.deepcopy(cur_state)
     all_sym_copy = copy.deepcopy(all_sym)
     lines_copy = copy.deepcopy(lines)
@@ -113,5 +110,5 @@ def mode_eval_and_run(args):
 
 if __name__ == '__main__':
     args = io_helper.init()
-    # dpll_helper.assert_correct_args(args)
+    dpll_helper.assert_correct_args(args)
     mode_eval_and_run(args)

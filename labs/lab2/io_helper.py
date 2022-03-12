@@ -38,7 +38,6 @@ def print_infixes(postfixes):
 
 def to_store_infixes(postfixes, outputs):
     for index, postfix in enumerate(postfixes):
-        # assert index in list(outputs)
         outputs[index].append(postfix_to_infix(postfix))
     return outputs
 
@@ -89,12 +88,10 @@ def generate_all_syms_dict(cnf_data):
     all_symbols_dict = dict()
     for line in cnf_data:
         for atom in line:
-            # assert len(atom) > 0
             neg = False
             if atom[0] == '!':
                 neg = True
                 atom = atom[1:]
-            # assert len(atom) > 0
             if atom not in all_symbols_dict.keys():
                 all_symbols_dict[atom] = neg
             elif all_symbols_dict[atom] != neg:
@@ -117,7 +114,7 @@ def parse_args(args = None):
     parser.add_argument("-v", required = False, default = False, action = 'store_true',\
         help = "use this tag to generate the verbose output")
     parser.add_argument("-mode", type = str, required = True, default = -1,\
-        help = "the number of queens in the N-Queens problem")
+        help = "mode can be one of 'cnf', 'dpll', or 'solver'")
     parser.add_argument("mode_file", metavar = 'mode_file_path', type = str,\
         help = "pass the path of the mode's input file")
     parser.add_argument("-w", required = False, default = False, action = 'store_true',\
