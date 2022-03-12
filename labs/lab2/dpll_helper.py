@@ -4,7 +4,7 @@ import io_helper
 DEBUG_MODE = False
 
 def assert_correct_args(args):
-    assert args.mode == "cnf" or args.mode == "bnf" or args.mode == "dpll"
+    assert args.mode == "cnf" or args.mode == "solver" or args.mode == "dpll"
 
 def check_for_empty_lines(given_list) -> bool:
     for ele in given_list:

@@ -33,13 +33,29 @@ def print_infixes(postfixes):
     for postfix in postfixes:
         print_func(postfix_to_infix(postfix))
 
+def to_store_infixes(postfixes, outputs):
+    for index, postfix in enumerate(postfixes):
+        assert index in list(outputs)
+        outputs[index].append(postfix_to_infix(postfix))
+    return outputs
+
+def print_verbose_dict(outputs):
+    for key in outputs:
+        print_list(outputs[key])
+        # print_func("")
+
 @static_vars(outFile=None)
 def print_func(message, end = "\n", init = None):
     if init is not None:
         print_func.outFile = open(init, 'w')
         return
     if print_func.outFile is not None:
-        print_func.outFile.write(message + end)
+        try:
+            print_func.outFile.write(message + end)
+        except TypeError:
+            print("TypeError")
+            print("given message: " + str(message))
+            exit(0)
     else:
         print(message, end)
     
@@ -70,16 +86,12 @@ def read_bnf_file(bnf_file):
         # print_func(str(postfix_exprs[-1]))
     return postfix_exprs
 
-def read_cnf_file(cnf_file):
-    cnf_file = open_file(cnf_file, 'r')
-    cnf_data = cnf_file.readlines()
-    cnf_file.close()
+def generate_all_syms_dict(cnf_data):
     all_symbols_dict = dict()
-    cnf_lines = []
     for line in cnf_data:
-        atoms = line.strip('\n').split(' ', -1)
-        cnf_lines.append(atoms)
-        for atom in atoms:
+        # atoms = line.strip('\n').split(' ', -1)
+        # cnf_lines.append(atoms)
+        for atom in line:
             assert len(atom) > 0
             neg = False
             if atom[0] == '!':
@@ -90,6 +102,28 @@ def read_cnf_file(cnf_file):
                 all_symbols_dict[atom] = neg
             elif all_symbols_dict[atom] != neg:
                 all_symbols_dict[atom] = None
+    return all_symbols_dict
+
+def read_cnf_file(cnf_file):
+    cnf_file = open_file(cnf_file, 'r')
+    cnf_data = cnf_file.readlines()
+    cnf_file.close()
+    cnf_lines = []
+    for line in cnf_data:
+        atoms = line.strip('\n').split(' ', -1)
+        cnf_lines.append(atoms)
+        # for atom in atoms:
+        #     assert len(atom) > 0
+        #     neg = False
+        #     if atom[0] == '!':
+        #         neg = True
+        #         atom = atom[1:]
+        #     assert len(atom) > 0
+        #     if atom not in all_symbols_dict.keys():
+        #         all_symbols_dict[atom] = neg
+        #     elif all_symbols_dict[atom] != neg:
+        #         all_symbols_dict[atom] = None
+    all_symbols_dict = generate_all_syms_dict(cnf_lines)
     return (cnf_lines, all_symbols_dict)
 
 def parse_args(args = None):

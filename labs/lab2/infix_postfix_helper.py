@@ -56,8 +56,7 @@ def infix_to_postfix(infix: str):
 
 def postfix_to_infix(postfix: list) -> str:
     conversion_stack = []
-    infix = ""
-    for index, token in enumerate(postfix):
+    for token in postfix:
         assert not cnf_helper.is_bracket(token)
         if cnf_helper.is_atom(token):
             conversion_stack.append(token)
@@ -67,15 +66,10 @@ def postfix_to_infix(postfix: list) -> str:
             assert len(conversion_stack) > 0
             cur_val = cnf_helper.NEGATION + conversion_stack.pop() 
             conversion_stack.append(cur_val)
-            # infix += cnf_helper.NEGATION + conversion_stack.pop()
         else:
-            # print(index)
-            # print(token)
-            # print(str(conversion_stack))
             assert len(conversion_stack) > 1
             second = conversion_stack.pop()
             first = conversion_stack.pop()
             conversion_stack.append("(" + first + " " + token + " " + second + ")")
-            # infix += first + " " + token + " " + second + " "
     assert len(conversion_stack) == 1
     return conversion_stack.pop()
