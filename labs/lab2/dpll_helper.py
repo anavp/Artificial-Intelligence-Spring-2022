@@ -12,10 +12,12 @@ def check_for_empty_lines(given_list) -> bool:
             return True
     return False
 
-def assign_remaining(state):
+def assign_remaining(state, verbose):
     # TODO: Write "unbound: " here; in verbose mode??
     for sym in state.keys():
         if state[sym] is None:
+            if verbose:
+                io_helper.print_func("unbound " + sym + "=false")
             state[sym] = False
     return state
 
@@ -28,7 +30,7 @@ def find_pure_literal(all_sym):
         return None
     selected_syms.sort()
     assert all_sym[selected_syms[0]] is not None
-    return (selected_syms[0], all_sym[selected_syms[0]])
+    return (selected_syms[0], all_sym[selected_syms[0]], True)
 
 def find_unit_literal(lines):
     for line in lines:
@@ -39,7 +41,7 @@ def find_unit_literal(lines):
             if line[0][0] == '!':
                 neg = False
                 choice = choice[1:]
-            return (choice, neg)
+            return (choice, neg, False)
     return None
 
 def find_easy_choice(lines, all_sym):
@@ -57,14 +59,14 @@ def reevaluate_add(reevaluate, line, cur, neg = False):
     else:
         neg_cur = "!" + cur
     line.remove(cur)
-    assert cur not in line and neg_cur not in line
+    # assert cur not in line and neg_cur not in line
     for i in range(len(line) - 1, -1, -1):
         sym = line[i]
         assert sym is not None and len(sym) > 0
         if sym[0] == '!':
             sym = sym[1:]
             line[i] = sym
-        if sym in reevaluate:
+        if sym == cur or sym == neg_cur or sym in reevaluate:
             line.pop(i)
     return line
 
@@ -74,14 +76,14 @@ def reevaluation(sym, lines):
     value = None
     for line in lines:
         if sym in line:
-            assert neg_sym not in line
+            # assert neg_sym not in line
             if value is None:
                 value = True
                 continue
             elif not value:
                 return None
         elif neg_sym in line:
-            assert sym not in line
+            # assert sym not in line
             if value is None:
                 value = False
                 continue
@@ -94,30 +96,40 @@ def update(lines, all_sym, selection, verbose):
     neg_choice = "!" + choice
     length = len(lines)
     reevaluate = []
+    to_print = []
 
     # Filtering based on selection
     for i in range(length - 1, -1, -1):
         line = lines[i]
         assert len(line) > 0
+        appended = False
         if choice in line and value:
             reevaluate = reevaluate + reevaluate_add(reevaluate, line, choice)
             lines.pop(i)
             continue
         elif choice in line:
             assert not value
-            if len(line) > 1:
+            # if len(line) > 1:
+            if len(line) == 1 and verbose:
+                to_print.append(io_helper.get_line_for_print(line, " contradiction"))
+                appended = True
+            while choice in line:
                 line.remove(choice)
-                assert choice not in line
-                lines[i] = line
-            else:
-
-                lines.pop(i)
-                continue
+            # assert choice not in line
+            lines[i] = line
+            # else:
+            #     lines.pop(i)
+            #     continue
         assert choice not in line
         if neg_choice in line and value:
             # if len(line) > 1:
-            line.remove(neg_choice)
-            assert neg_choice not in line
+            if len(line) == 1 and verbose:
+                io_helper.print_func(io_helper.get_line_for_print(line, " contradiction"))
+                appended = True
+            while neg_choice in line:
+                line.remove(neg_choice)
+            # if len(line) > 1 and verbose:
+            #     io_helper.print_func(io_helper.get_line_for_print(line))
             lines[i] = line
             # else:
             #     lines.pop(i)
@@ -126,6 +138,9 @@ def update(lines, all_sym, selection, verbose):
             assert not value
             reevaluate = reevaluate + reevaluate_add(reevaluate, line, neg_choice, True)
             lines.pop(i)
+            continue
+        if not appended:
+            to_print.append(io_helper.get_line_for_print(line, end = ""))
         assert neg_choice not in line
     
     # Updating all_sym:
@@ -133,6 +148,11 @@ def update(lines, all_sym, selection, verbose):
     for sym in reevaluate:
         all_sym[sym] = reevaluation(sym, lines)
     
+    # Print if verbose:
+    if verbose:
+        to_print.reverse()
+        for line in to_print:
+            io_helper.print_func(line)
     return lines, all_sym
 
 def make_hard_choice(state):

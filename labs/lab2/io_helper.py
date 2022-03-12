@@ -8,15 +8,25 @@ def static_vars(**kwargs):
         return func
     return decorate
 
+def get_line_for_print(line, end = "\n") -> str:
+    if len(line) == 0:
+        return end
+    ret_str = ""
+    for sym in line[:-1]:
+        ret_str += sym + " "
+    ret_str += line[-1] + end
+    return ret_str
+
 def print_lines(lines):
     for line in lines:
         # assert len(line) > 0
-        if len(line) == 0:
-            print_func("")
-            continue
-        for sym in line[:-1]:
-            print_func(sym, end = " ")
-        print_func(line[-1])
+        print_func(get_line_for_print(line, end = ""))
+        # if len(line) == 0:
+        #     print_func("")
+        #     continue
+        # for sym in line[:-1]:
+        #     print_func(sym, end = " ")
+        # print_func(line[-1])
 
 def print_state(state):
     syms = list(state)
@@ -80,6 +90,9 @@ def read_bnf_file(bnf_file):
     bnf_file.close()
     postfix_exprs = []
     for line in bnf_data:
+        if len(line) == 0:
+            continue
+        # print(line)
         # line = line.strip("\n")
         postfix_exprs.append(infix_to_postfix(line))
         # print_func("current postfix line: ", end = "")
@@ -124,7 +137,7 @@ def read_cnf_file(cnf_file):
         #     elif all_symbols_dict[atom] != neg:
         #         all_symbols_dict[atom] = None
     all_symbols_dict = generate_all_syms_dict(cnf_lines)
-    return (cnf_lines, all_symbols_dict)
+    return cnf_lines, all_symbols_dict
 
 def parse_args(args = None):
     parser = argparse.ArgumentParser(description="CSCI-GA.2560 Artificial Intelligence Lab2 BNF to CNF and DPLL solver code")
@@ -137,3 +150,10 @@ def parse_args(args = None):
     parser.add_argument("-w", required = False, default = False, action = 'store_true',\
         help = "use this tag to write the output to file called 'output.out' in the same directory")
     return parser.parse_args()
+
+def init():
+    args = parse_args()
+    if args.w:
+        print_func("", "", "./output.out")
+    return args
+    # dpll_helper.assert_correct_args(args)

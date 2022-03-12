@@ -5,7 +5,7 @@ def add_required_spaces(bnf_string: str) -> str:
     """
         Add spaces around brackets and operators
     """
-    for operator in cnf_helper.ALL_OPERATORS[1:]:
+    for operator in cnf_helper.ALL_OPERATORS:
         if operator == cnf_helper.IMPLIES:
             continue
         bnf_string = bnf_string.replace(operator, " " + operator + " ")
