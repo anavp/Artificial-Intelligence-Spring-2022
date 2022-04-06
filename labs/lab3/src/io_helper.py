@@ -18,6 +18,9 @@ def process_edges(line, node_dict):
     node_name = line[:index]
     # assert node_name in node_dict.keys()
     node_dict = create_node_if_not_exist(node_dict, node_name)
+    cur_node = node_dict[node_name]
+    if cur_node.node_type == graph.NODE_TYPE.TERMINAL_NODE:
+        cur_node.node_type = graph.NODE_TYPE.CHANCE_NODE
     line = line[index+1:]
     assert ':' not in line
     assert line[0] == '[' and line[-1] == ']'
@@ -25,7 +28,7 @@ def process_edges(line, node_dict):
     edges = line.split(',',-1)
     for edge in edges:
         node_dict = create_node_if_not_exist(node_dict, edge)
-        node_dict[node_name].add_neighbor(node_dict[edge]) # Assuming uni-directional edges
+        cur_node.add_neighbor(node_dict[edge]) # Assuming uni-directional edges
     return node_dict
 
 def process_probabilities(line, node_dict):
@@ -43,16 +46,21 @@ def process_probabilities(line, node_dict):
         probabilities[index] = float(prob)
     
     assert len(probabilities) == len(cur_node.neighbor_list) or len(probabilities) == 1
+
     if len(probabilities) == 1:
         cur_node.alpha = 1 - probabilities[0]
         cur_node.set_arbitrary_policy()
         cur_node.set_probabilities_by_alpha()
+        cur_node.node_type = graph.NODE_TYPE.DECISION_NODE
         return node_dict
+
     sum = 0
     for index, neighbor_name in enumerate(cur_node.neighbor_list):
         neighbor_obj = cur_node.neighbors[neighbor_name]
         neighbor_obj.probability = probabilities[index]
+        cur_node.node_type = graph.NODE_TYPE.CHANCE_NODE
         sum += probabilities[index]
+
     assert sum == 1, "the sum of given probabilities must be 1"
     return node_dict
 
@@ -64,10 +72,12 @@ def process_input(file):
     for line in lines:
         assert type(line) == str
         if len(line.strip()) == 0:
-            print_func("skipping blank line")
+            if DEBUG_MODE:
+                print_func("skipping blank line\n")
             continue
         if line[0] == '#':
-            print_func("skipping commented line")
+            if DEBUG_MODE:
+                print_func("skipping commented line\n")
             continue
         assert '#' not in line, "the assumption is that the commented lines have # as their very first character"
         line = line.strip()
@@ -149,12 +159,34 @@ def parse_args(args = None):
         help = "argument to set the integer that indicates a cutoff for value iteration, default value = 100") # TODO: Check if this help statement is right
     parser.add_argument("-w", required = False, type = str, nargs='?', action = writeAction,\
         help = "use this tag to write the output to file called 'output.out' in the same directory")
-    parser.add_argument("-v", required = False, default = False, action = 'store_true',\
-        help = "use this tag to generate the verbose output")
     return parser.parse_args()
+
+def print_args(args):
+    print_func("input_file: " + args.input_file)
+    print_func("-df: " + str(args.df))
+    print_func("-min: " + str(args.min))
+    print_func("-tol: " + str(args.tol))
+    print_func("-iter: " + str(args.iter))
+    print_func("args end\n")
+    pass
+
+def print_constants():
+    print_func("df: " + str(graph.CONSTANTS.discount_factor))
+    print_func("tol: " + str(graph.CONSTANTS.tolerance))
+    print_func("iter: " + str(graph.CONSTANTS.iteration_limit))
+    print_func("min: " + str(graph.CONSTANTS.minimize))
+    print_func("constants end\n")
 
 def init():
     args = parse_args()
     print_func("", "", args.w)
+    if DEBUG_MODE:
+        print_args(args)
+    graph.CONSTANTS(args.df, args.tol, args.iter, args.min)
+    if DEBUG_MODE:
+        print_constants()
     node_dict = process_input(args.input_file)
+    if DEBUG_MODE:
+        for _, node in node_dict.items():
+            node.print_node()
     return node_dict, args

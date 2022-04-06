@@ -1,6 +1,6 @@
 import graph
 
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 def create_node_if_not_exist(node_dict, node_name):
     if node_name not in node_dict.keys():
