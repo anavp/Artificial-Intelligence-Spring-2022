@@ -138,8 +138,10 @@ class node:
 
     def print_node(self):
         io_helper.print_func("name: " + self.name)
-        io_helper.print_func("reward: " + str(self.reward))
-        io_helper.print_func("alpha: " + str(self.alpha))
+        io_helper.print_func("value: " + '%.3f'%(self.value))
+        io_helper.print_func("node_type: " + self.node_type.name)
+        io_helper.print_func("reward: " + '%.3f'%(self.reward))
+        io_helper.print_func("alpha: " + '%.3f'%(self.alpha))
         io_helper.print_func("policy: ", end = '')
         if self.policy_name is not None:
             io_helper.print_func(self.policy_name)
@@ -149,5 +151,5 @@ class node:
         io_helper.print_func("neighbors:")
         for neighbor in self.neighbor_list:
             io_helper.print_func("neighbor name: " + neighbor)
-            io_helper.print_func("neighbor probability: " + str(self.neighbors[neighbor].probability))
+            io_helper.print_func("neighbor probability: " + '%.3f'%(self.neighbors[neighbor].probability))
         io_helper.print_func("node end\n")

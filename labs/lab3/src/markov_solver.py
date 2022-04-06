@@ -27,6 +27,8 @@ def update_policies(nodes):
             continue
         policy_updated = policy_updated or node.update_policy()
     if policy_updated:
+        if DEBUG_MODE:
+            print_nodes(nodes)
         reset_values(nodes)
     return policy_updated
 

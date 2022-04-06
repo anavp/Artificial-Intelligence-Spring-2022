@@ -177,6 +177,12 @@ def print_constants():
     print_func("min: " + str(graph.CONSTANTS.minimize))
     print_func("constants end\n")
 
+def print_nodes(nodes):
+    print_func("Node printing beginning!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    for _, node in nodes.items():
+        node.print_node()
+    print_func("")
+
 def init():
     args = parse_args()
     print_func("", "", args.w)
@@ -187,6 +193,5 @@ def init():
         print_constants()
     node_dict = process_input(args.input_file)
     if DEBUG_MODE:
-        for _, node in node_dict.items():
-            node.print_node()
+        print_nodes(node_dict)
     return node_dict, args
