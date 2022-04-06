@@ -1,14 +1,89 @@
 import argparse
+import os
+import graph
+from gen_helper import *
 
+def process_reward(line, node_dict):
+    line = line.replace(' ', '')
+    line = line.split('=', -1)
+    assert len(line) == 2
+    node_name = line[0]
+    node_dict = create_node_if_not_exist(node_dict, node_name)
+    node_dict[node_name].reward = int(line[-1])
+    return node_dict
 
-def read_input_file(file):
+def process_edges(line, node_dict):
+    line = line.replace(" ", "")
+    index = line.index(':') # TODO: Use .split instead of .index
+    node_name = line[:index]
+    # assert node_name in node_dict.keys()
+    node_dict = create_node_if_not_exist(node_dict, node_name)
+    line = line[index+1:]
+    assert ':' not in line
+    assert line[0] == '[' and line[-1] == ']'
+    line = line[1:-1]
+    edges = line.split(',',-1)
+    for edge in edges:
+        node_dict = create_node_if_not_exist(node_dict, edge)
+        node_dict[node_name].add_neighbor(node_dict[edge]) # Assuming uni-directional edges
+    return node_dict
+
+def process_probabilities(line, node_dict):
+    # line = line.replace(" ", '')
+    line = line.split('%', -1)
+    assert len(line) == 2
+    node_name = line[0].strip()
+    assert node_name in node_dict.keys(), "how can the probabilities be assigned if the edges haven't been defined yet!"
+    # node_dict = create_node_if_not_exist(node_dict, node_name)
+    probabilities = line[1].strip()
+    probabilities = probabilities.split()
+    cur_node = node_dict[node_name]
+    
+    for index, prob in enumerate(probabilities):
+        probabilities[index] = float(prob)
+    
+    assert len(probabilities) == len(cur_node.neighbor_list) or len(probabilities) == 1
+    if len(probabilities) == 1:
+        cur_node.alpha = 1 - probabilities[0]
+        cur_node.set_arbitrary_policy()
+        cur_node.set_probabilities_by_alpha()
+        return node_dict
+    sum = 0
+    for index, neighbor_name in enumerate(cur_node.neighbor_list):
+        neighbor_obj = cur_node.neighbors[neighbor_name]
+        neighbor_obj.probability = probabilities[index]
+        sum += probabilities[index]
+    assert sum == 1, "the sum of given probabilities must be 1"
+    return node_dict
+
+def process_input(file):
     file = open_file(file)
     lines = file.readlines()
+    node_dict = {}
+
     for line in lines:
-        if len(line) == 0:
+        assert type(line) == str
+        if len(line.strip()) == 0:
+            print_func("skipping blank line")
             continue
         if line[0] == '#':
+            print_func("skipping commented line")
             continue
+        assert '#' not in line, "the assumption is that the commented lines have # as their very first character"
+        line = line.strip()
+        if '=' in line:
+            node_dict = process_reward(line, node_dict)
+            continue
+        elif ':' in line:
+            node_dict = process_edges(line, node_dict)
+            continue
+        elif '%' in line:
+            node_dict = process_probabilities(line, node_dict)
+    
+    return node_dict
+        
+
+        
 
 class writeAction(argparse.Action):
     '''
@@ -40,6 +115,8 @@ def static_vars(**kwargs):
 
 def open_file(filename, mode = 'r'):
     try:
+        if mode == 'w':
+            os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok = True)
         file = open(filename, mode)
         return file
     except FileNotFoundError:
@@ -79,4 +156,5 @@ def parse_args(args = None):
 def init():
     args = parse_args()
     print_func("", "", args.w)
-    return args
+    node_dict = process_input(args.input_file)
+    return node_dict, args
