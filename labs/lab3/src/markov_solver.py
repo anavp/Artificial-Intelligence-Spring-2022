@@ -1,6 +1,12 @@
 from io_helper import *
-from gen_helper import *
+import gen_helper
 # TODO: Create readme file; don't forget to explain all -w shit and the way it affects input-file-path positional argument
+
+def set_chance_nodes_probabilities(nodes):
+    for _, node in nodes.items():
+        if node.node_type != graph.NODE_TYPE.CHANCE_NODE:
+            continue
+        node.set_chance_node_probabilities()
 
 def check_if_within_tolerance(nodes):
     for _, cur_node in nodes.items():
@@ -16,8 +22,16 @@ def one_value_iteration(nodes):
     for _, node in nodes.items():
         node.update_value()
 
+def set_terminal_nodes(nodes):
+    for _, node in nodes.items():
+        if node.node_type != graph.NODE_TYPE.TERMINAL_NODE:
+            continue
+        node.update_value()
+
 def reset_values(nodes):
     for _, node in nodes.items():
+        if node.node_type == graph.NODE_TYPE.TERMINAL_NODE:
+            continue
         node.value = 0
 
 def update_policies(nodes):
@@ -25,16 +39,18 @@ def update_policies(nodes):
     for _, node in nodes.items():
         if node.node_type != graph.NODE_TYPE.DECISION_NODE:
             continue
-        policy_updated = policy_updated or node.update_policy()
+        policy_updated = node.update_policy() or policy_updated
     if policy_updated:
-        if DEBUG_MODE:
+        if gen_helper.DEBUG_MODE:
             print_nodes(nodes)
         reset_values(nodes)
     return policy_updated
 
 def value_iteration(nodes):
-    one_value_iteration(nodes)
+    set_terminal_nodes(nodes)
     carry_over_values(nodes)
+    if gen_helper.DEBUG_MODE:
+        print_nodes(nodes)
     nodes[next(iter(nodes))].within_tolerance = False
     iter_count = 0
     while (iter_count < graph.CONSTANTS.iteration_limit and not check_if_within_tolerance(nodes)):
@@ -45,9 +61,11 @@ def value_iteration(nodes):
 
 def generic_markov_solver(nodes):
     counter = 0
+    set_chance_nodes_probabilities(nodes)
+    
     while(value_iteration(nodes)):
         counter += 1
-        if counter > 1000:
+        if counter > 100:
             print_func("counter break!!!!!")
             break
     

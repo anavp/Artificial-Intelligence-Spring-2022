@@ -1,14 +1,14 @@
 import argparse
 import os
 import graph
-from gen_helper import *
+import gen_helper
 
 def process_reward(line, node_dict):
     line = line.replace(' ', '')
     line = line.split('=', -1)
     assert len(line) == 2
     node_name = line[0]
-    node_dict = create_node_if_not_exist(node_dict, node_name)
+    node_dict = gen_helper.create_node_if_not_exist(node_dict, node_name)
     node_dict[node_name].reward = int(line[-1])
     return node_dict
 
@@ -17,27 +17,26 @@ def process_edges(line, node_dict):
     index = line.index(':') # TODO: Use .split instead of .index
     node_name = line[:index]
     # assert node_name in node_dict.keys()
-    node_dict = create_node_if_not_exist(node_dict, node_name)
+    node_dict = gen_helper.create_node_if_not_exist(node_dict, node_name)
     cur_node = node_dict[node_name]
     if cur_node.node_type == graph.NODE_TYPE.TERMINAL_NODE:
         cur_node.node_type = graph.NODE_TYPE.CHANCE_NODE
+        # cur_node.node_type = graph.NODE_TYPE.DECISION_NODE
     line = line[index+1:]
     assert ':' not in line
     assert line[0] == '[' and line[-1] == ']'
     line = line[1:-1]
     edges = line.split(',',-1)
     for edge in edges:
-        node_dict = create_node_if_not_exist(node_dict, edge)
+        node_dict = gen_helper.create_node_if_not_exist(node_dict, edge)
         cur_node.add_neighbor(node_dict[edge]) # Assuming uni-directional edges
     return node_dict
 
 def process_probabilities(line, node_dict):
-    # line = line.replace(" ", '')
     line = line.split('%', -1)
     assert len(line) == 2
     node_name = line[0].strip()
     assert node_name in node_dict.keys(), "how can the probabilities be assigned if the edges haven't been defined yet!"
-    # node_dict = create_node_if_not_exist(node_dict, node_name)
     probabilities = line[1].strip()
     probabilities = probabilities.split()
     cur_node = node_dict[node_name]
@@ -50,8 +49,8 @@ def process_probabilities(line, node_dict):
     if len(probabilities) == 1:
         cur_node.alpha = 1 - probabilities[0]
         cur_node.set_arbitrary_policy()
-        cur_node.set_probabilities_by_alpha()
         cur_node.node_type = graph.NODE_TYPE.DECISION_NODE
+        cur_node.set_probabilities_by_alpha()
         return node_dict
 
     sum = 0
@@ -72,11 +71,11 @@ def process_input(file):
     for line in lines:
         assert type(line) == str
         if len(line.strip()) == 0:
-            if DEBUG_MODE:
+            if gen_helper.DEBUG_MODE:
                 print_func("skipping blank line\n")
             continue
         if line[0] == '#':
-            if DEBUG_MODE:
+            if gen_helper.DEBUG_MODE:
                 print_func("skipping commented line\n")
             continue
         assert '#' not in line, "the assumption is that the commented lines have # as their very first character"
@@ -153,12 +152,13 @@ def parse_args(args = None):
         help = "-df argument") # TODO: Write proper help statement
     parser.add_argument("-min", required = False, default = False, action = 'store_true',\
         help = "optional argument to minimize values as costs; default value = False") # TODO: Check if this help statement is right
-    parser.add_argument("-tol", required = False, type = float, default = 0.01,\
-        help = "argument to set float tolerance for exiting value iteration, default value = 0.01") # TODO: Check if this help statement is right
+    parser.add_argument("-tol", required = False, type = float, default = 0.001,\
+        help = "argument to set float tolerance for exiting value iteration, default value = 0.01") # TODO: Check if this help statement is right; 0.01 or 0.001??????
     parser.add_argument("-iter", required = False, type = int, default = 100,\
         help = "argument to set the integer that indicates a cutoff for value iteration, default value = 100") # TODO: Check if this help statement is right
     parser.add_argument("-w", required = False, type = str, nargs='?', action = writeAction,\
         help = "use this tag to write the output to file called 'output.out' in the same directory")
+    parser.add_argument("-debug", required = False, action = 'store_true', default = False)
     return parser.parse_args()
 
 def print_args(args):
@@ -185,13 +185,14 @@ def print_nodes(nodes):
 
 def init():
     args = parse_args()
+    gen_helper.DEBUG_MODE = args.debug
     print_func("", "", args.w)
-    if DEBUG_MODE:
+    if gen_helper.DEBUG_MODE:
         print_args(args)
     graph.CONSTANTS(args.df, args.tol, args.iter, args.min)
-    if DEBUG_MODE:
+    if gen_helper.DEBUG_MODE:
         print_constants()
     node_dict = process_input(args.input_file)
-    if DEBUG_MODE:
+    if gen_helper.DEBUG_MODE:
         print_nodes(node_dict)
     return node_dict, args

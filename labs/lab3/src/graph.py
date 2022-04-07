@@ -3,6 +3,7 @@ import random
 # from io_helper import static_vars
 import io_helper
 from enum import Enum
+import gen_helper
 
 def constants(**kwargs):
     def decorate(func):
@@ -37,6 +38,8 @@ class node:
     prev_value = 0
     node_type = None
     within_tolerance = False
+    if gen_helper.DEBUG_MODE:
+        neighbor_values = dict()
     
     class __neighbor_object:
         neighbor, probability, index = None, None, None
@@ -58,6 +61,8 @@ class node:
         self.node_type = NODE_TYPE.TERMINAL_NODE
         self.prev_value = 0
         self.within_tolerance = False
+        if gen_helper.DEBUG_MODE:
+            self.neighbor_values = dict()
     
     def __init__(self, name):
         self.name = name
@@ -72,6 +77,8 @@ class node:
         self.node_type = NODE_TYPE.TERMINAL_NODE
         self.prev_value = 0
         self.within_tolerance = False
+        if gen_helper.DEBUG_MODE:
+            self.neighbor_values = dict()
 
     def add_neighbor(self, neighbor):
         self.neighbors[neighbor.name] = (self.__neighbor_object(self.__neighbor_count, neighbor))
@@ -79,26 +86,40 @@ class node:
         self.__neighbor_count += 1
     
     def set_arbitrary_policy(self):
+        # self.__policy = 0
         self.__policy = random.randint(0, len(self.neighbors) - 1)
         self.policy_name = self.neighbor_list[self.__policy]
     
     def set_probabilities_by_alpha(self):
         assert self.__policy is not None and self.policy_name is not None
-        # assert self.neighbors[self.policy_name].probability is None
+        assert self.node_type == NODE_TYPE.DECISION_NODE
         self.neighbors[self.policy_name].probability = 1 - self.alpha
         sum = 1 - self.alpha
         value = float(self.alpha) / float(len(self.neighbor_list) - 1)
         for neighbor in self.neighbor_list:
             if neighbor == self.policy_name:
                 continue
-            # assert self.neighbors[neighbor].probability is None
             self.neighbors[neighbor].probability = value
             sum += value
         assert sum == 1
     
+    def set_chance_node_probabilities(self):
+        assert self.node_type == NODE_TYPE.CHANCE_NODE
+        value = 1.0 / float(len(self.neighbor_list))
+        for neighbor, neighbor_obj in self.neighbors.items():
+            if neighbor_obj.probability is not None:
+                return
+            neighbor_obj.probability = value
+    
+    def better_value(self, value, max_value):
+        if not CONSTANTS.minimize:
+            return value > max_value
+        return value < max_value
+
     def update_policy(self):
         assert self.node_type == NODE_TYPE.DECISION_NODE
-        new_policy, value, max_value = 0, 0, float('-inf')
+        new_policy, value = 0, 0
+        max_value = float('-inf') if not CONSTANTS.minimize else float('inf')
         assert len(self.neighbor_list) > 0
         alpha_rest = float(self.alpha) / float(len(self.neighbor_list) - 1)
         for neighbor in self.neighbor_list:
@@ -109,7 +130,11 @@ class node:
                     continue
                 neighbor_obj = self.neighbors[neighbor2]
                 value += (alpha_rest * neighbor_obj.neighbor.value)
-            if value > max_value:
+            value *= CONSTANTS.discount_factor
+            value += self.reward
+            if gen_helper.DEBUG_MODE:
+                self.neighbor_values[neighbor] = value
+            if self.better_value(value, max_value):
                 max_value = value
                 new_policy = neighbor
         self.__policy = self.neighbor_list.index(new_policy)
@@ -120,9 +145,8 @@ class node:
     
     def update_value(self):
         if self.node_type == NODE_TYPE.TERMINAL_NODE:
-            self.prev_value = self.reward
+            self.value = self.reward
             return
-        # elif self.node_type == NODE_TYPE.CHANCE_NODE:
         value = 0
         for neighbor in self.neighbor_list:
             neighbor_obj = self.neighbors[neighbor]
@@ -130,7 +154,6 @@ class node:
         value *= CONSTANTS.discount_factor
         value += self.reward
         self.value = value
-        # assert self.node_type == NODE_TYPE.DECISION_NODE
 
     def carry_over_value(self):
         self.within_tolerance = (abs(self.value - self.prev_value) <= CONSTANTS.tolerance)
@@ -147,6 +170,11 @@ class node:
             io_helper.print_func(self.policy_name)
         else:
             io_helper.print_func("None")
+        if gen_helper.DEBUG_MODE:
+            io_helper.print_func("policy possibilities:")
+            for neighbor, value in self.neighbor_values.items():
+                io_helper.print_func(neighbor + ' : %.3f'%value)
+
         io_helper.print_func("neighbor count: " + str(self.__neighbor_count))
         io_helper.print_func("neighbors:")
         for neighbor in self.neighbor_list:
