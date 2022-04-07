@@ -1,9 +1,5 @@
 import random
-# import io_helper
-# from io_helper import static_vars
-import io_helper
 from enum import Enum
-import gen_helper
 
 def constants(**kwargs):
     def decorate(func):
@@ -38,8 +34,6 @@ class node:
     prev_value = 0
     node_type = None
     within_tolerance = False
-    if gen_helper.DEBUG_MODE:
-        neighbor_values = dict()
     
     class __neighbor_object:
         neighbor, probability, index = None, None, None
@@ -47,22 +41,6 @@ class node:
             self.neighbor = neighbor
             self.probability = probability
             self.index = index
-    
-    def __init__(self, name, reward):
-        self.name = name
-        self.reward = reward
-        self.alpha = 0
-        self.__neighbor_count = 0
-        self.__policy = None
-        self.neighbors = dict()
-        self.neighbor_list = list()
-        self.policy_name = None
-        self.value = 0
-        self.node_type = NODE_TYPE.TERMINAL_NODE
-        self.prev_value = 0
-        self.within_tolerance = False
-        if gen_helper.DEBUG_MODE:
-            self.neighbor_values = dict()
     
     def __init__(self, name):
         self.name = name
@@ -77,8 +55,6 @@ class node:
         self.node_type = NODE_TYPE.TERMINAL_NODE
         self.prev_value = 0
         self.within_tolerance = False
-        if gen_helper.DEBUG_MODE:
-            self.neighbor_values = dict()
 
     def add_neighbor(self, neighbor):
         self.neighbors[neighbor.name] = (self.__neighbor_object(self.__neighbor_count, neighbor))
@@ -86,7 +62,6 @@ class node:
         self.__neighbor_count += 1
     
     def set_arbitrary_policy(self):
-        # self.__policy = 0
         self.__policy = random.randint(0, len(self.neighbors) - 1)
         self.policy_name = self.neighbor_list[self.__policy]
     
@@ -109,7 +84,7 @@ class node:
     def set_chance_node_probabilities(self):
         assert self.node_type == NODE_TYPE.CHANCE_NODE
         value = 1.0 / float(len(self.neighbor_list))
-        for neighbor, neighbor_obj in self.neighbors.items():
+        for _, neighbor_obj in self.neighbors.items():
             if neighbor_obj.probability is not None:
                 return
             neighbor_obj.probability = value
@@ -139,8 +114,6 @@ class node:
                 value += (alpha_rest * neighbor_obj.neighbor.value)
             value *= CONSTANTS.discount_factor
             value += self.reward
-            if gen_helper.DEBUG_MODE:
-                self.neighbor_values[neighbor] = value
             if self.better_value(value, max_value):
                 max_value = value
                 new_policy = neighbor
@@ -172,25 +145,7 @@ class node:
             return
         assert len(self.neighbor_list) > 1 or self.alpha == 0, "The number of edges can'1 be 1 and alpha != 0"
 
-    def print_node(self):
-        io_helper.print_func("name: " + self.name)
-        io_helper.print_func("value: " + '%.3f'%(self.value))
-        io_helper.print_func("node_type: " + self.node_type.name)
-        io_helper.print_func("reward: " + '%.3f'%(self.reward))
-        io_helper.print_func("alpha: " + '%.3f'%(self.alpha))
-        io_helper.print_func("policy: ", end = '')
-        if self.policy_name is not None:
-            io_helper.print_func(self.policy_name)
-        else:
-            io_helper.print_func("None")
-        if gen_helper.DEBUG_MODE:
-            io_helper.print_func("policy possibilities:")
-            for neighbor, value in self.neighbor_values.items():
-                io_helper.print_func(neighbor + ' : %.3f'%value)
-
-        io_helper.print_func("neighbor count: " + str(self.__neighbor_count))
-        io_helper.print_func("neighbors:")
-        for neighbor in self.neighbor_list:
-            io_helper.print_func("neighbor name: " + neighbor)
-            io_helper.print_func("neighbor probability: " + '%.3f'%(self.neighbors[neighbor].probability))
-        io_helper.print_func("node end\n")
+def create_node_if_not_exist(nodes, node_name):
+    if node_name not in nodes.keys():
+        nodes[node_name] = node(node_name)
+    return nodes

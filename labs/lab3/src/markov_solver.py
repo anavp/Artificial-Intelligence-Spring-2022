@@ -1,5 +1,4 @@
 from io_helper import *
-import gen_helper
 # TODO: Create readme file; don't forget to explain all -w shit and the way it affects input-file-path positional argument
 
 def set_chance_nodes_probabilities(nodes):
@@ -44,15 +43,11 @@ def update_policies(nodes):
             continue
         policy_updated = node.update_policy() or policy_updated
     if policy_updated:
-        if gen_helper.DEBUG_MODE:
-            print_nodes(nodes)
         reset_values(nodes)
     return policy_updated
 
 def value_iteration(nodes):
     carry_over_values(nodes)
-    if gen_helper.DEBUG_MODE:
-        print_nodes(nodes)
     nodes[next(iter(nodes))].within_tolerance = False
     iter_count = 0
     while (iter_count < graph.CONSTANTS.iteration_limit and not check_if_within_tolerance(nodes)):
