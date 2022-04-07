@@ -4,9 +4,8 @@ import gen_helper
 
 def set_chance_nodes_probabilities(nodes):
     for _, node in nodes.items():
-        if node.node_type != graph.NODE_TYPE.CHANCE_NODE:
-            continue
-        node.set_chance_node_probabilities()
+        if node.node_type == graph.NODE_TYPE.CHANCE_NODE:
+            node.set_chance_node_probabilities()
 
 def assert_proper_input(nodes):
     for _,node in nodes.items():
@@ -51,7 +50,6 @@ def update_policies(nodes):
     return policy_updated
 
 def value_iteration(nodes):
-    set_terminal_nodes(nodes)
     carry_over_values(nodes)
     if gen_helper.DEBUG_MODE:
         print_nodes(nodes)
@@ -64,37 +62,10 @@ def value_iteration(nodes):
     return update_policies(nodes)
 
 def generic_markov_solver(nodes):
-    counter = 0
     set_chance_nodes_probabilities(nodes)
     assert_proper_input(nodes)
-    
-    while(value_iteration(nodes)):
-        counter += 1
-        if counter > 100:
-            print_func("counter break!!!!!")
-            break
-    
-def print_policies(nodes):
-    policy_list = list()
-    for node_name, node in nodes.items():
-        if node.node_type != graph.NODE_TYPE.DECISION_NODE:
-            continue
-        if len(node.neighbor_list) == 1:
-            continue
-        policy_list.append(node_name + " -> " + node.policy_name)
-    policy_list.sort()
-    for policy in policy_list:
-        print_func(policy)
-    print_func("")
-
-def print_values(nodes):
-    value_list = list()
-    for node_name, node in nodes.items():
-        value_list.append(node_name + '=%.3f'%(node.value))
-    value_list.sort()
-    for value in value_list:
-        print_func(value, end = " ")
-    print_func("")
+    set_terminal_nodes(nodes)
+    while(value_iteration(nodes)): pass
 
 if __name__ == '__main__':
     nodes, args = init()

@@ -14,14 +14,14 @@ def process_reward(line, node_dict):
 
 def process_edges(line, node_dict):
     line = line.replace(" ", "")
-    index = line.index(':') # TODO: Use .split instead of .index
-    node_name = line[:index]
-    # assert node_name in node_dict.keys()
+    line = line.split(':')
+    assert len(line) == 2
+    node_name = line[0]
     node_dict = gen_helper.create_node_if_not_exist(node_dict, node_name)
     cur_node = node_dict[node_name]
     if cur_node.node_type == graph.NODE_TYPE.TERMINAL_NODE:
         cur_node.node_type = graph.NODE_TYPE.DECISION_NODE
-    line = line[index+1:]
+    line = line[1]
     assert ':' not in line
     assert line[0] == '[' and line[-1] == ']'
     line = line[1:-1]
@@ -151,16 +151,17 @@ def parse_args(args = None):
     parser.add_argument("input_file", metavar = "input-file-path", type = str,\
         help = "positional argument that requires the input file path to be given")
     parser.add_argument("-df", type = float, required = False, default = 1.0,\
-        help = "-df argument") # TODO: Write proper help statement
+        help = "float discount factor [0, 1] to use on future rewards, default value = 1.0")
     parser.add_argument("-min", required = False, default = False, action = 'store_true',\
-        help = "optional argument to minimize values as costs; default value = False") # TODO: Check if this help statement is right
+        help = "optional argument to minimize values as costs; default value = False")
     parser.add_argument("-tol", required = False, type = float, default = 0.001,\
-        help = "argument to set float tolerance for exiting value iteration, default value = 0.01") # TODO: Check if this help statement is right; 0.01 or 0.001??????
+        help = "argument to set float tolerance for exiting value iteration, default value = 0.001")
     parser.add_argument("-iter", required = False, type = int, default = 100,\
-        help = "argument to set the integer that indicates a cutoff for value iteration, default value = 100") # TODO: Check if this help statement is right
+        help = "argument to set the integer that indicates a cutoff for value iteration, default value = 100")
     parser.add_argument("-w", required = False, type = str, nargs='?', action = writeAction,\
         help = "use this tag to write the output to file called 'output.out' in the same directory")
-    parser.add_argument("-debug", required = False, action = 'store_true', default = False)
+    parser.add_argument("-debug", required = False, action = 'store_true', default = False,\
+        help = "use this tag to enable debugging output")
     return parser.parse_args()
 
 def print_args(args):
@@ -185,8 +186,39 @@ def print_nodes(nodes):
         node.print_node()
     print_func("")
 
+def print_policies(nodes):
+    policy_list = list()
+    for node_name, node in nodes.items():
+        if node.node_type != graph.NODE_TYPE.DECISION_NODE:
+            continue
+        if len(node.neighbor_list) == 1:
+            continue
+        policy_list.append(node_name + " -> " + node.policy_name)
+    policy_list.sort()
+    for policy in policy_list:
+        print_func(policy)
+    print_func("")
+
+def print_values(nodes):
+    value_list = list()
+    for node_name, node in nodes.items():
+        value_list.append(node_name + '=%.3f'%(node.value))
+    value_list.sort()
+    for value in value_list:
+        print_func(value, end = " ")
+    print_func("")
+
+def assert_correct_args(args):
+    if args.df > 1 or args.df < 0:
+        print ("ERROR: The given discount factor must lie in the interval [0,1]")
+        exit(0)
+    if args.iter < 0:
+        print ("ERROR: The given iteration limit must be positive")
+        exit(0)
+
 def init():
     args = parse_args()
+    assert_correct_args(args)
     gen_helper.DEBUG_MODE = args.debug
     print_func("", "", args.w)
     if gen_helper.DEBUG_MODE:
