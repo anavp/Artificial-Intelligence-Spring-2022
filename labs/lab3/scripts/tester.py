@@ -41,7 +41,7 @@ def check_if_files_match(file1_name, file2_name) -> bool:
                 return False
             valuation1 = float(valuation1[1])
             valuation2 = float(valuation2[1])
-            if round(abs(valuation1 - valuation2),3) <= 0.001:
+            if round(abs(valuation1 - valuation2),3) <= 0.01:
                 continue
             return False
     return True
