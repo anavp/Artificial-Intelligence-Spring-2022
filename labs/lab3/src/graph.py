@@ -95,6 +95,9 @@ class node:
         assert self.node_type == NODE_TYPE.DECISION_NODE
         self.neighbors[self.policy_name].probability = 1 - self.alpha
         sum = 1 - self.alpha
+        if len(self.neighbor_list) == 1:
+            assert sum == 1
+            return
         value = float(self.alpha) / float(len(self.neighbor_list) - 1)
         for neighbor in self.neighbor_list:
             if neighbor == self.policy_name:
@@ -121,7 +124,11 @@ class node:
         new_policy, value = 0, 0
         max_value = float('-inf') if not CONSTANTS.minimize else float('inf')
         assert len(self.neighbor_list) > 0
-        alpha_rest = float(self.alpha) / float(len(self.neighbor_list) - 1)
+        if len(self.neighbor_list) > 1:
+            alpha_rest = float(self.alpha) / float(len(self.neighbor_list) - 1)
+        else:
+            alpha_rest = 0
+        
         for neighbor in self.neighbor_list:
             neighbor_obj = self.neighbors[neighbor]
             value = (float(1-self.alpha) * neighbor_obj.neighbor.value)
@@ -150,6 +157,7 @@ class node:
         value = 0
         for neighbor in self.neighbor_list:
             neighbor_obj = self.neighbors[neighbor]
+            assert neighbor_obj.probability is not None, self.name + "; " + neighbor
             value += neighbor_obj.neighbor.prev_value * neighbor_obj.probability
         value *= CONSTANTS.discount_factor
         value += self.reward
@@ -158,6 +166,11 @@ class node:
     def carry_over_value(self):
         self.within_tolerance = (abs(self.value - self.prev_value) <= CONSTANTS.tolerance)
         self.prev_value = self.value
+    
+    def assert_proper_input(self):
+        if self.node_type != NODE_TYPE.DECISION_NODE:
+            return
+        assert len(self.neighbor_list) > 1 or self.alpha == 0, "The number of edges can'1 be 1 and alpha != 0"
 
     def print_node(self):
         io_helper.print_func("name: " + self.name)

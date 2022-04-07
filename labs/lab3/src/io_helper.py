@@ -20,8 +20,7 @@ def process_edges(line, node_dict):
     node_dict = gen_helper.create_node_if_not_exist(node_dict, node_name)
     cur_node = node_dict[node_name]
     if cur_node.node_type == graph.NODE_TYPE.TERMINAL_NODE:
-        cur_node.node_type = graph.NODE_TYPE.CHANCE_NODE
-        # cur_node.node_type = graph.NODE_TYPE.DECISION_NODE
+        cur_node.node_type = graph.NODE_TYPE.DECISION_NODE
     line = line[index+1:]
     assert ':' not in line
     assert line[0] == '[' and line[-1] == ']'
@@ -30,6 +29,9 @@ def process_edges(line, node_dict):
     for edge in edges:
         node_dict = gen_helper.create_node_if_not_exist(node_dict, edge)
         cur_node.add_neighbor(node_dict[edge]) # Assuming uni-directional edges
+    if cur_node.node_type == graph.NODE_TYPE.DECISION_NODE:
+        cur_node.set_arbitrary_policy()
+        cur_node.set_probabilities_by_alpha()
     return node_dict
 
 def process_probabilities(line, node_dict):

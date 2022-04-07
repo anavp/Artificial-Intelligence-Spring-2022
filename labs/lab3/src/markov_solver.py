@@ -8,6 +8,10 @@ def set_chance_nodes_probabilities(nodes):
             continue
         node.set_chance_node_probabilities()
 
+def assert_proper_input(nodes):
+    for _,node in nodes.items():
+        node.assert_proper_input()
+
 def check_if_within_tolerance(nodes):
     for _, cur_node in nodes.items():
         if not cur_node.within_tolerance:
@@ -62,6 +66,7 @@ def value_iteration(nodes):
 def generic_markov_solver(nodes):
     counter = 0
     set_chance_nodes_probabilities(nodes)
+    assert_proper_input(nodes)
     
     while(value_iteration(nodes)):
         counter += 1
@@ -73,6 +78,8 @@ def print_policies(nodes):
     policy_list = list()
     for node_name, node in nodes.items():
         if node.node_type != graph.NODE_TYPE.DECISION_NODE:
+            continue
+        if len(node.neighbor_list) == 1:
             continue
         policy_list.append(node_name + " -> " + node.policy_name)
     policy_list.sort()
