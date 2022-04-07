@@ -87,30 +87,25 @@ def process_input(file):
             nodes = process_probabilities(line, nodes)
     
     return nodes
-        
-
-        
 
 class writeAction(argparse.Action):
     '''
-        This class makes the -w input assume "../outputs/output.out" as the string input if no file name follows -w in the commandline.   
+        This class makes the -w input assume "output.out" as the string input if no file name follows -w in the commandline.   
 
         For example:
 
         ```python3 markov_solver -w output2.out [rest of the commands]```
         
-        The above command will store "../outputs/output2.out" in args.w
+        The above command will store "output2.out" in args.w
 
         ```python3 markov_solver.py -w [rest of the commands]```
 
-        The above command will store "../outputs/output.out" in args.w. Make sure not to throw the input-file-path positional argument right after -w if you don't want the compiler to assume the output file as the input file given and throw an error that input-file-path positional argument not given.
+        The above command will store "output.out" in args.w. Make sure not to throw the input-file-path positional argument right after -w if you don't want the compiler to assume the output file as the input file given and throw an error that input-file-path positional argument not given.
     '''
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         super().__init__(option_strings, dest, nargs = nargs, **kwargs)
     def __call__(self, parser, namespace, values, option_string=None):
-        if values is not None and values[:10] != "../outputs":
-            values = "../outputs/" + values
-        setattr(namespace, self.dest, values) if values is not None else setattr(namespace, self.dest, "../outputs/output.out")
+        setattr(namespace, self.dest, values) if values is not None else setattr(namespace, self.dest, "output.out")
 
 def static_vars(**kwargs):
     def decorate(func):
@@ -121,8 +116,6 @@ def static_vars(**kwargs):
 
 def open_file(filename, mode = 'r'):
     try:
-        if mode == 'w':
-            os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok = True)
         file = open(filename, mode)
         return file
     except FileNotFoundError:
@@ -193,4 +186,4 @@ def init():
     print_func("", "", args.w)
     graph.CONSTANTS(args.df, args.tol, args.iter, args.min)
     nodes = process_input(args.input_file)
-    return nodes, args
+    return nodes

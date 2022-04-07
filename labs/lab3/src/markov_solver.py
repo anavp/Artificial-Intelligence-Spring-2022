@@ -26,22 +26,19 @@ def one_value_iteration(nodes):
 
 def set_terminal_nodes(nodes):
     for _, node in nodes.items():
-        if node.node_type != graph.NODE_TYPE.TERMINAL_NODE:
-            continue
-        node.update_value()
+        if node.node_type == graph.NODE_TYPE.TERMINAL_NODE:
+            node.update_value()
 
 def reset_values(nodes):
     for _, node in nodes.items():
-        if node.node_type == graph.NODE_TYPE.TERMINAL_NODE:
-            continue
-        node.value = 0
+        if node.node_type != graph.NODE_TYPE.TERMINAL_NODE:
+            node.value = 0
 
 def update_policies(nodes):
     policy_updated = False
     for _, node in nodes.items():
-        if node.node_type != graph.NODE_TYPE.DECISION_NODE:
-            continue
-        policy_updated = node.update_policy() or policy_updated
+        if node.node_type == graph.NODE_TYPE.DECISION_NODE:
+            policy_updated = node.update_policy() or policy_updated
     if policy_updated:
         reset_values(nodes)
     return policy_updated
@@ -63,7 +60,7 @@ def generic_markov_solver(nodes):
     while(value_iteration(nodes)): pass
 
 if __name__ == '__main__':
-    nodes, args = init()
+    nodes = init()
     generic_markov_solver(nodes)
     print_policies(nodes)
     print_values(nodes)
