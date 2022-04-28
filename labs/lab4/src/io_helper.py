@@ -1,4 +1,6 @@
 import argparse
+import os
+import csv
 import helper
 
 def open_file(filename, mode = 'r'):
@@ -55,6 +57,8 @@ def parse_args(args = None):
         help = "Come on! Write something") #TODO: this too
     parser.add_argument('-C', type = int, required = False, default = 0,\
         help = "blahhhhhhhhh!") # TODO: BLAHHHHHHHHHH
+    parser.add_argument('-v', required = False, action = 'store_true',\
+        help = 'use this tag to enable verbose output')
     parser.add_argument("-w", required = False, type = str, nargs='?', action = writeAction,\
         help = "use this tag to write the output to file called 'output.log' in the same directory")
     parser.add_argument("-debug", required = False, action = 'store_true',\
@@ -65,13 +69,39 @@ def parse_args(args = None):
 def print_args(args):
     print_func(f"-train: {args.train}")
     print_func(f"-test: {args.test}")
+    print_func(f"training file: {helper.CONSTANTS.TRAIN}")
+    print_func(f"testing file: {helper.CONSTANTS.TEST}")
     print_func(f"-K: {args.K}")
     print_func(f"-C: {args.C}")
+    print_func(f"algo: {helper.CONSTANTS.ALGO.name}")
     print_func(f"-w: {args.w}")
     print_func(f"-debug: {args.debug}")
 
+def assert_proper_inputs():
+    if helper.CONSTANTS.K > 0 and helper.CONSTANTS.C > 0:
+        print_func("K and C both cannot be greater than zero. Exiting...")
+        exit(0)
+    assert helper.CONSTANTS.ALGO is not None, 'algorithm should have been initialized with either naive bayes or kNN'
+    if helper.CONSTANTS.TRAIN is None or os.path.splitext(helper.CONSTANTS.TRAIN)[1] != '.csv':
+        print_func("training file must have extension '.csv'. Exiting...")
+        exit(0)
+    if helper.CONSTANTS.TEST is not None and os.path.splitext(helper.CONSTANTS.TEST)[1] != '.csv':
+        print_func("training file must have the extension '.csv'. Exiting...")
+        exit(0)
+
+def csv_read(file):
+    file = open_file(file)
+    file_val = csv.reader(file)
+    file_val = list(file_val)
+    file.close()
+    return file_val
+
 def init(args):
     print_func("", "", args.w)
-    helper.CONSTANTS(args.K, args.C, args.debug)
+    helper.CONSTANTS(args.K, args.C, args.train, args.test, args.debug, (helper.ALGORITHM.NAIVE_BAYES if args.K == 0 else helper.ALGORITHM.kNN))
+    assert_proper_inputs()
     if helper.CONSTANTS.DEBUG_MODE:
         print_args(args)
+    helper.CONSTANTS.TRAIN = csv_read(helper.CONSTANTS.TRAIN)
+    helper.CONSTANTS.TEST = csv_read(helper.CONSTANTS.TEST)
+    
