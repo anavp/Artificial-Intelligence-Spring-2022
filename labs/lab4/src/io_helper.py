@@ -1,7 +1,7 @@
 import argparse
 import os
 import csv
-import helper
+import classes
 
 def open_file(filename, mode = 'r'):
     try:
@@ -69,23 +69,23 @@ def parse_args(args = None):
 def print_args(args):
     print_func(f"-train: {args.train}")
     print_func(f"-test: {args.test}")
-    print_func(f"training file: {helper.CONSTANTS.TRAIN}")
-    print_func(f"testing file: {helper.CONSTANTS.TEST}")
+    print_func(f"training file: {classes.CONSTANTS.TRAIN}")
+    print_func(f"testing file: {classes.CONSTANTS.TEST}")
     print_func(f"-K: {args.K}")
     print_func(f"-C: {args.C}")
-    print_func(f"algo: {helper.CONSTANTS.ALGO.name}")
+    print_func(f"algo: {classes.CONSTANTS.ALGO.name}")
     print_func(f"-w: {args.w}")
     print_func(f"-debug: {args.debug}")
 
 def assert_proper_inputs():
-    if helper.CONSTANTS.K > 0 and helper.CONSTANTS.C > 0:
+    if classes.CONSTANTS.K > 0 and classes.CONSTANTS.C > 0:
         print_func("K and C both cannot be greater than zero. Exiting...")
         exit(0)
-    assert helper.CONSTANTS.ALGO is not None, 'algorithm should have been initialized with either naive bayes or kNN'
-    if helper.CONSTANTS.TRAIN is None or os.path.splitext(helper.CONSTANTS.TRAIN)[1] != '.csv':
+    assert classes.CONSTANTS.ALGO is not None, 'algorithm should have been initialized with either naive bayes or kNN'
+    if classes.CONSTANTS.TRAIN is None or os.path.splitext(classes.CONSTANTS.TRAIN)[1] != '.csv':
         print_func("training file must have extension '.csv'. Exiting...")
         exit(0)
-    if helper.CONSTANTS.TEST is not None and os.path.splitext(helper.CONSTANTS.TEST)[1] != '.csv':
+    if classes.CONSTANTS.TEST is not None and os.path.splitext(classes.CONSTANTS.TEST)[1] != '.csv':
         print_func("training file must have the extension '.csv'. Exiting...")
         exit(0)
 
@@ -98,10 +98,13 @@ def csv_read(file):
 
 def init(args):
     print_func("", "", args.w)
-    helper.CONSTANTS(args.K, args.C, args.train, args.test, args.debug, (helper.ALGORITHM.NAIVE_BAYES if args.K == 0 else helper.ALGORITHM.kNN))
+    classes.CONSTANTS(args.K, args.C, args.train, args.test, args.debug, (classes.ALGORITHM.NAIVE_BAYES if args.K == 0 else classes.ALGORITHM.kNN))
     assert_proper_inputs()
-    if helper.CONSTANTS.DEBUG_MODE:
+    if classes.CONSTANTS.DEBUG_MODE:
         print_args(args)
-    helper.CONSTANTS.TRAIN = csv_read(helper.CONSTANTS.TRAIN)
-    helper.CONSTANTS.TEST = csv_read(helper.CONSTANTS.TEST)
+    training_data = csv_read(classes.CONSTANTS.TRAIN)
+    testing_data = csv_read(classes.CONSTANTS.TEST)
+    return training_data, testing_data
+    # classes.CONSTANTS.TRAIN = csv_read(classes.CONSTANTS.TRAIN)
+    # classes.CONSTANTS.TEST = csv_read(classes.CONSTANTS.TEST)
     
