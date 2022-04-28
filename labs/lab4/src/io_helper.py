@@ -98,13 +98,22 @@ def csv_read(file):
 
 def init(args):
     print_func("", "", args.w)
-    classes.CONSTANTS(args.K, args.C, args.train, args.test, args.debug, (classes.ALGORITHM.NAIVE_BAYES if args.K == 0 else classes.ALGORITHM.kNN))
+    classes.CONSTANTS(args.K, args.C, args.train, args.test, args.debug, (classes.ALGORITHM.NAIVE_BAYES if args.K == 0 else classes.ALGORITHM.kNN), args.v)
+    # classes.COUNTS()
     assert_proper_inputs()
     if classes.CONSTANTS.DEBUG_MODE:
         print_args(args)
     training_data = csv_read(classes.CONSTANTS.TRAIN)
     testing_data = csv_read(classes.CONSTANTS.TEST)
     return training_data, testing_data
-    # classes.CONSTANTS.TRAIN = csv_read(classes.CONSTANTS.TRAIN)
-    # classes.CONSTANTS.TEST = csv_read(classes.CONSTANTS.TEST)
+
+
+def print_output(counts: classes.COUNTS) -> None:
+    # TODO: if classes.CONSTANTS.VERBOSE:
+    labels = list(counts.true_positives)
+    labels.sort()
+    for label in labels:
+        precision_denom = counts.true_positives.get(label, 0) + counts.false_positives.get(label, 0)
+        recall_denom = counts.true_positives.get(label, 0) + counts.false_negatives.get(label, 0)
+        print_func(f"Label={label} Precision={counts.true_positives.get(label, 0)}/{precision_denom} Recall={counts.true_positives.get(label, 0)}/{recall_denom}")
     

@@ -1,4 +1,5 @@
 from enum import Enum
+import io_helper
 
 class ALGORITHM(Enum):
     NAIVE_BAYES = 1
@@ -11,9 +12,9 @@ def static_constants(**kwargs):
         return func
     return decorator
 
-@static_constants(K = None, C = None, DEBUG_MODE = False, ALGO = None, TRAIN = None, TEST = None, ATTR_CT = -1)
+@static_constants(K = None, C = None, DEBUG_MODE = False, ALGO = None, TRAIN = None, TEST = None, ATTR_CT = -1, VERBOSE = None)
 class CONSTANTS:
-    def __init__(self, K, C, training_file, testing_file, debug_mode = False, algo = None):
+    def __init__(self, K, C, training_file, testing_file, debug_mode = False, algo = None, verbose = False):
         CONSTANTS.K = K
         CONSTANTS.C = C
         CONSTANTS.DEBUG_MODE = debug_mode
@@ -21,23 +22,41 @@ class CONSTANTS:
         CONSTANTS.TRAIN = training_file
         CONSTANTS.TEST = testing_file
         CONSTANTS.ATTR_CT = -1
+        CONSTANTS.VERBOSE = verbose
+
+# @static_values(true_positives = 0, false_positives = 0, true_negatives = 0, false_negatives = 0)
+class COUNTS:
+    true_positives = dict()
+    false_positives = dict()
+    true_negatives = dict()
+    false_negatives = dict()
+    
+    def __init__(self):
+        self.true_positives = dict()
+        self.false_positives = dict()
+        self.true_negatives = dict()
+        self.false_negatives = dict()
 
 
-class ParserMeta(type):
-    """A Parser metaclass that will be used for parser class creation.
-    """
-    def __instancecheck__(cls, instance):
-        return cls.__subclasscheck__(type(instance))
+class ClassifierMeta(type):
+    def __instancecheck__(cls, __instance) -> bool:
+        return cls.__subclasscheck__(type(__instance))
 
-    def __subclasscheck__(cls, subclass):
+    def __subclasscheck__(cls, __subclass: type) -> bool:
         return (
-                hasattr(subclass, 'train') and
-                callable(subclass.train) and
-                subclass.train.__annotations__["return"] == list
-                )
+            hasattr(__subclass, 'train') and
+            callable(__subclass.train) and
+            __subclass.train.__annotations__["return"] == list and
+            hasattr(__subclass, 'test') and
+            callable(__subclass.test) and
+            __subclass.test.__annotations__["return"] == COUNTS
+        )
 
-class CLASSIFIER(metaclass = ParserMeta):
+class CLASSIFIER(metaclass = ClassifierMeta):
     def train() -> list:
+        pass
+
+    def test() -> COUNTS:
         pass
 
 class RECORD:
@@ -47,42 +66,31 @@ class RECORD:
 
     def __init__(self, *args):
         self.attribute_ct = len(args) - 1
+        # io_helper.print_func(f"debug: {args}")
         for attr in args[:-1]:
             self.attributes.append(attr)
         self.label = args[-1]
 
+class DataMeta(type):
+    def __instancecheck__(cls, __instance) -> bool:
+        return cls.__subclasscheck__(type(__instance))
+    
+    def __subclasscheck__(cls, __subclass: type) -> bool:
+        return (
+            hasattr(__subclass, 'add_record') and
+            callable(__subclass.add_record) and
+            __subclass.add_record.__annotations__["return"] == None
+        )
 
 class DATA:
     records = list()
-    label_counts = dict()
-    attr_counts = list()
-    __record_count = 0
-    __attr_count = -1
+    attribute_ct = -1
+    record_count = 0
 
     def __init__(self):
         self.records = list()
-        self.label_count = dict()
-        self.__record_count = 0
-        self.attr_counts = list()
-        self.__attr_count = -1
-    
-    def __init_attr_counts(self):
-        assert self.__attr_count != -1
-        for _ in range(self.__attr_count):
-            self.attr_counts.append(dict())
-    
-    def __update_attr_counts(self, label, *args):
-        assert len(self.attr_counts) == self.__attr_count
-        for i in range(self.__attr_count):
-            self.attr_counts[i][label] = self.attr_counts[i].get(label, 0) + 1
+        self.attribute_ct = -1
+        self.record_count = 0
 
-    def add_record(self, values):
-        self.records.append(RECORD(*values))
-        if self.__attr_count == -1:
-            self.__attr_count = self.records[-1].attribute_ct
-            self.__init_attr_counts()
-        label = self.records[-1].label
-        self.label_counts[label] = self.label_counts.get(label, 0) + 1
-        self.__record_count += 1
-        self.__update_attr_counts(label, *self.records[-1].attributes)
-        assert self.__record_count == len(self.records)
+    def add_record(self, values) -> None:
+        pass
