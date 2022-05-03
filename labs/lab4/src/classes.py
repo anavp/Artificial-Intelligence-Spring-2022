@@ -46,30 +46,35 @@ class ClassifierMeta(type):
         return (
             hasattr(__subclass, 'train') and
             callable(__subclass.train) and
-            __subclass.train.__annotations__["return"] == list and
+            __subclass.train.__annotations__["return"] == DATA and
             hasattr(__subclass, 'test') and
             callable(__subclass.test) and
             __subclass.test.__annotations__["return"] == COUNTS
         )
 
-class CLASSIFIER(metaclass = ClassifierMeta):
-    def train() -> list:
-        pass
-
-    def test() -> COUNTS:
-        pass
-
 class RECORD:
-    attributes = list()
-    attribute_ct = -1
-    label = None
+    # attributes = list()
+    # attribute_ct = -1
+    # label = None
 
     def __init__(self, *args):
         self.attribute_ct = len(args) - 1
         # io_helper.print_func(f"debug: {args}")
+        self.attributes = list()
         for attr in args[:-1]:
             self.attributes.append(attr)
         self.label = args[-1]
+    
+    def print_record(self):
+        print("record print:")
+        print(f"label = {self.label}")
+        print("attributes: ", end = "")
+        for i in range(self.attribute_ct):
+            print(self.attributes[i], end = ', ')
+        print("")
+        print('record end\n')
+
+
 
 class DataMeta(type):
     def __instancecheck__(cls, __instance) -> bool:
@@ -82,7 +87,7 @@ class DataMeta(type):
             __subclass.add_record.__annotations__["return"] == None
         )
 
-class DATA:
+class DATA(metaclass = DataMeta):
     records = list()
     attribute_ct = -1
     record_count = 0
@@ -93,4 +98,11 @@ class DATA:
         self.record_count = 0
 
     def add_record(self, values) -> None:
+        pass
+
+class CLASSIFIER(metaclass = ClassifierMeta):
+    def train() -> DATA:
+        pass
+
+    def test() -> COUNTS:
         pass

@@ -50,13 +50,13 @@ class writeAction(argparse.Action):
 def parse_args(args = None):
     parser = argparse.ArgumentParser(description = "CSCI-GA.2560 Artificial Intelligence Lab 4 Supervised Machine Learning: kNN and Naive Bayes")
     parser.add_argument('-train', required = True, type = str,\
-        help = "something") # TODO: Write this
+        help = "pass path of training file")
     parser.add_argument('-test', required = True, type = str,\
-        help = "something else") # TODO: Write this too
+        help = "pass path of testing file")
     parser.add_argument('-K', type = int, required = False, default = 0,\
-        help = "Come on! Write something") #TODO: this too
+        help = "number of neighbors for kNN")
     parser.add_argument('-C', type = int, required = False, default = 0,\
-        help = "blahhhhhhhhh!") # TODO: BLAHHHHHHHHHH
+        help = "laplacian correction constant for Naive Bayes")
     parser.add_argument('-v', required = False, action = 'store_true',\
         help = 'use this tag to enable verbose output')
     parser.add_argument("-w", required = False, type = str, nargs='?', action = writeAction,\
