@@ -109,7 +109,6 @@ def init(args):
 
 
 def print_output(counts: classes.COUNTS) -> None:
-    # TODO: if classes.CONSTANTS.VERBOSE:
     labels = list(counts.true_positives)
     labels.sort()
     for label in labels:
